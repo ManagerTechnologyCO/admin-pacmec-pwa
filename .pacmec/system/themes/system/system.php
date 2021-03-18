@@ -11,3 +11,8 @@
  */
 
 #echo "Theme: System incluido";
+
+if(pageinfo("component") == 'pages-error')
+{
+  add_style_head(siteinfo('siteurl')   . "/.pacmec/system/assets/css/style-error.css",  ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8", "media" => "all"], null, false);
+}

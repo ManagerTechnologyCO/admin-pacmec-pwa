@@ -27,3 +27,4 @@ define('DB_charset', 'utf8mb4');
 define('DB_prefix', '');
 
 define('AUTH_KEY_COST', 10);
+define('MODE_DEBUG', true);

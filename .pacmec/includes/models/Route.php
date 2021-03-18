@@ -15,11 +15,11 @@ namespace PACMEC;
 
 class Route extends ModeloBase
 {
-	public $id = 0;
+	public $id = -1;
 	public $is_actived = 1;
 	public $parent = null;
 	public $permission_access = null;
-	public $title = 'Error';
+	public $title = 'no_found';
 	public $theme = null;
 	public $description = 'No Found';
 	public $request_uri = '/404';

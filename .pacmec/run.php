@@ -33,24 +33,3 @@ if(siteinfo('enable_ssl') == 1 && $_SERVER["HTTPS"] != "on"){
 pacmec_theme_check();
 pacmec_assets_globals();
 pacmec_run_ui();
-
-require_once PACMEC_PATH . '.debug/footer.php'; // SAnear datos entrantes
-exit;
-
-//Cargamos controladores y acciones
-if (isset($_GET["controller"])) {
-    $controllerObj=cargarControlador($_GET["controller"]);
-    lanzarAccion($controllerObj);
-}
-else {
-    $controllerObj=cargarControlador(CONTROLADOR_DEFECTO);
-    lanzarAccion($controllerObj);
-}
-/*
-*/
-
-
-#echo "HOME_PATH: " . HOME_PATH . "\n";
-#echo "PUBLIC_PATH: " . PUBLIC_PATH . "\n";
-#echo "CORE_PATH: " . CORE_PATH . "\n";
-#echo "global_session: " . json_encode($global_session) . " | isGuest: " .  json_encode($global_session->isGuest()) . " | getId: " .  json_encode($global_session->getId());

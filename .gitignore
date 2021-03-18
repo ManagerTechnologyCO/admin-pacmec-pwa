@@ -1,3 +1,5 @@
 .ftpconfig
 .ftpignore
 .pacmec\.prv\settings.php
+.pacmec\themes\townhub\origin
+.pacmec\themes\townhub\License

@@ -81,7 +81,8 @@ function siteinfo($option_name)
 	return $GLOBALS['PACMEC']['options'][$option_name];
 }
 
-function pacmec_init_vars(){
+function pacmec_init_vars()
+{
 	global $PACMEC;
 	$GLOBALS['PACMEC'] = [];
 	$GLOBALS['PACMEC']['hooks'] = PACMEC\Hooks::getInstance();
@@ -153,15 +154,6 @@ function pacmec_init_options()
       }
   }
   if($GLOBALS['PACMEC']['lang'] == null){ $GLOBALS['PACMEC']['lang'] = siteinfo('lang_default'); }
-  /*
-	$GLOBALS['PACMEC']['routes']['/errors'] = (object) [
-		'is_actived'=>1,
-		'permission_access'=>null,
-		'title'=>"Ups, Error",
-		'request_uri'=>'/errors',
-		'template'=>'error',
-		'content'=>"",
-	];*/
 }
 
 function php_file_tree_dir_JSON_exts($directory, $return_link, $extensions = array(), $first_call = true, $step=0, $limit=1)
@@ -366,7 +358,7 @@ function pacmec_init_route()
 
 function pacmec_validate_route()
 {
-  #if($GLOBALS['PACMEC']['route']->theme == null) $GLOBALS['PACMEC']['route']->theme = siteinfo('theme_default');
+  if($GLOBALS['PACMEC']['route']->theme == null) $GLOBALS['PACMEC']['route']->theme = siteinfo('theme_default');
 }
 
 function pacmec_load_theme($path)
@@ -426,14 +418,18 @@ function pacmec_theme_check()
   }
 }
 
-function add_style_head($src = "", $attrs = [], $ordering = 0.35, $add_in_list = false)
+function add_style_head($src, $attrs = [], $ordering = 0.35, $add_in_list = false)
 {
+  if(!isset($attrs) || $attrs==null || !is_array($attrs)) $attrs = [];
+  if(!isset($ordering) || $ordering==null) $ordering = 0.35;
+  if(!isset($add_in_list) || $add_in_list==null) $add_in_list = false;
   if ($src) {
     if($add_in_list == true) $GLOBALS['PACMEC']['website']['styles']['list'][] = $src;
 		$GLOBALS['PACMEC']['website']['styles']['head'][] = [
       "tag" => "link",
       "attrs" => array_merge($attrs, [
         "href" => $src,
+        "ordering" => $ordering,
       ]),
       "ordering" => $ordering,
     ];
@@ -442,14 +438,18 @@ function add_style_head($src = "", $attrs = [], $ordering = 0.35, $add_in_list =
 	return false;
 }
 
-function add_style_foot($src = "", $attrs = [], $ordering = 0.35, $add_in_list = false)
+function add_style_foot($src, $attrs = [], $ordering = 0.35, $add_in_list = false)
 {
+  if(!isset($attrs) || $attrs==null || !is_array($attrs)) $attrs = [];
+  if(!isset($ordering) || $ordering==null) $ordering = 0.35;
+  if(!isset($add_in_list) || $add_in_list==null) $add_in_list = false;
   if ($src) {
     if($add_in_list == true) $GLOBALS['PACMEC']['website']['styles']['list'][] = $src;
 		$GLOBALS['PACMEC']['website']['styles']['foot'][] = [
       "tag" => "link",
       "attrs" => array_merge($attrs, [
         "href" => $src,
+        "ordering" => $ordering,
       ]),
       "ordering" => $ordering,
     ];
@@ -458,14 +458,18 @@ function add_style_foot($src = "", $attrs = [], $ordering = 0.35, $add_in_list =
 	return false;
 }
 
-function add_scripts_head($src = "", $attrs = [], $ordering = 0.35, $add_in_list = false)
+function add_scripts_head($src, $attrs = [], $ordering = 0.35, $add_in_list = false)
 {
+  if(!isset($attrs) || $attrs==null || !is_array($attrs)) $attrs = [];
+  if(!isset($ordering) || $ordering==null) $ordering = 0.35;
+  if(!isset($add_in_list) || $add_in_list==null) $add_in_list = false;
   if ($src) {
     if($add_in_list == true) $GLOBALS['PACMEC']['website']['scripts']['list'][] = $src;
 		$GLOBALS['PACMEC']['website']['scripts']['head'][] = [
       "tag" => "script",
       "attrs" => array_merge($attrs, [
         "src" => $src,
+        "ordering" => $ordering,
       ]),
       "ordering" => $ordering,
     ];
@@ -474,14 +478,18 @@ function add_scripts_head($src = "", $attrs = [], $ordering = 0.35, $add_in_list
 	return false;
 }
 
-function add_scripts_foot($src = "", $attrs = [], $ordering = 0.35, $add_in_list = false)
+function add_scripts_foot($src, $attrs = [], $ordering = 0.35, $add_in_list = false)
 {
+  if(!isset($attrs) || $attrs==null || !is_array($attrs)) $attrs = [];
+  if(!isset($ordering) || $ordering==null) $ordering = 0.35;
+  if(!isset($add_in_list) || $add_in_list==null) $add_in_list = false;
   if ($src) {
     if($add_in_list == true) $GLOBALS['PACMEC']['website']['scripts']['list'][] = $src;
 		$GLOBALS['PACMEC']['website']['scripts']['foot'][] = [
       "tag" => "script",
       "attrs" => array_merge($attrs, [
         "src" => $src,
+        "ordering" => $ordering,
       ]),
       "ordering" => $ordering,
     ];
@@ -490,13 +498,14 @@ function add_scripts_foot($src = "", $attrs = [], $ordering = 0.35, $add_in_list
 	return false;
 }
 
-
 function pacmec_assets_globals()
 {
-  add_style_head(siteinfo('siteurl')   . "/.pacmec/system/assets/css/plugins.css", ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8", "media" => "all"], 0.99, false);
-  add_style_head(siteinfo('siteurl')   . "/.pacmec/system/assets/css/pacmec.css",  ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8", "media" => "all"], 1, false);
-  add_scripts_head(siteinfo('siteurl') . "/.pacmec/system/assets/js/plugins.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 0.99, false);
-  add_scripts_foot(siteinfo('siteurl') . "/.pacmec/system/sdk/all.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 0, false);
+  add_style_head(siteinfo('siteurl')   . "/.pacmec/system/assets/css/pacmec.css",  ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8"], 1, false);
+  add_style_head(siteinfo('siteurl')   . "/.pacmec/system/assets/css/plugins.css", ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8"], 0.99, false);
+  add_scripts_head(siteinfo('siteurl') . "/.pacmec/system/assets/js/plugins.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
+  add_scripts_foot(siteinfo('siteurl') . "/.pacmec/system/assets/js/sdk.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 0, false);
+
+  if(siteinfo('enable_pwa') == true) add_scripts_foot(siteinfo('siteurl') . "/.pacmec/system/assets/js/main.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 0, false);
 }
 
 function pacmec_run_ui()
@@ -518,10 +527,7 @@ function pacmec_run_ui()
 
 function get_header()
 {
-	if(!is_file("{$GLOBALS['PACMEC']['theme']['dir']}/header.php") || !file_exists("{$GLOBALS['PACMEC']['theme']['dir']}/header.php")){
-    exit("Hubo un problema al ejecutar la Interfas de Usuario. {$GLOBALS['PACMEC']['theme']['text_domain']} -> header.php]");
-	}
-	require_once "{$GLOBALS['PACMEC']['theme']['dir']}/header.php";
+  return get_template_part("header");
 }
 
 function route_active()
@@ -536,7 +542,7 @@ function route_active()
 function get_template_part($file)
 {
 	if(!is_file("{$GLOBALS['PACMEC']['theme']['dir']}/{$file}.php") || !file_exists("{$GLOBALS['PACMEC']['theme']['dir']}/{$file}.php")){
-		exit("Error critico en tema, no existe archivo. {$GLOBALS['PACMEC']['theme']['text_domain']} -> {$file}");
+		exit("Error critico en tema, no existe archivo. {$GLOBALS['PACMEC']['theme']['text_domain']} -> {$file}. {$GLOBALS['PACMEC']['theme']['dir']}/{$file}.php");
 	}
 	require_once "{$GLOBALS['PACMEC']['theme']['dir']}/{$file}.php";
 }
@@ -594,35 +600,53 @@ function stable_usort(&$array, $cmp)
     {
         return $cmp($a[1], $b[1]) ?: ($a[0] - $b[0]);
     });
-    return $array = array_column($array, 1);
+    $array = array_column($array, 1);
 }
 
 function pacmec_head()
 {
-  // usort($GLOBALS['PACMEC']['website']['styles']['head'], "usortTest")
   stable_usort($GLOBALS['PACMEC']['website']['styles']['head'], 'pacmec_ordering_by_object_asc');
-
-  echo json_encode($GLOBALS['PACMEC']['website']['styles']['head'], JSON_PRETTY_PRINT)."\n";
-  /*
-	foreach($GLOBALS['PACMEC']['website']['styles']['head'] as $file){
-		#echo "<link href=\"{$file['src']}\" rel=\"{$file['rel']}\" type=\"{$file['type']}\">";
-    echo json_encode($file, JSON_PRETTY_PRINT)."\n";
-	}
-  */
-  exit;
-	do_action( "head" );
-	foreach($GLOBALS['PACMEC']['website']['scripts']['head'] as $file){
-		echo "<script src=\"{$file['src']}\" rel=\"{$file['rel']}\" type=\"{$file['type']}\"></script>";
-	}
-
-	if(isAdmin()){
-		echo "<script>\n";
-			echo "const route = ".json_encode($GLOBALS['PACMEC']['route'], JSON_PRETTY_PRINT)."; \n";
-			echo "const styles_list = ".json_encode($GLOBALS['PACMEC']['website']['styles']['list'], JSON_PRETTY_PRINT)."; \n";
-			echo "const scripts_list = ".json_encode($GLOBALS['PACMEC']['website']['scripts']['list'], JSON_PRETTY_PRINT)."; \n";
-		echo "</script>\n";
-	}
+  stable_usort($GLOBALS['PACMEC']['website']['scripts']['head'], 'pacmec_ordering_by_object_asc');
+  $a = "";
+	foreach($GLOBALS['PACMEC']['website']['styles']['head'] as $file){ $a .= \PHPStrap\Util\Html::tag($file['tag'], "", [], $file['attrs'], true)."\t"; }
+  $a .= \PHPStrap\Util\Html::tag('style', do_action( "head-styles" ), [], ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8"], false) . "\t";
+	foreach($GLOBALS['PACMEC']['website']['scripts']['head'] as $file){ $a .= \PHPStrap\Util\Html::tag($file['tag'], "", [], $file['attrs'], false)."\t"; }
+  $a .= \PHPStrap\Util\Html::tag('script', do_action( "head-scripts" ), [], ["type"=>"text/javascript", "charset"=>"UTF-8"], false);
+  echo "{$a}";
+  do_action( "head" );
+  echo "\n";
 	return true;
+}
+
+function do_action(string $tag, $arg = '') : bool
+{
+	return $GLOBALS['PACMEC']['hooks']->do_action( $tag, $arg );
+}
+
+function pacmec_foot()
+{
+  stable_usort($GLOBALS['PACMEC']['website']['styles']['foot'], 'pacmec_ordering_by_object_asc');
+  stable_usort($GLOBALS['PACMEC']['website']['scripts']['foot'], 'pacmec_ordering_by_object_asc');
+  $a = "";
+	foreach($GLOBALS['PACMEC']['website']['styles']['foot'] as $file){ $a .= \PHPStrap\Util\Html::tag($file['tag'], "", [], $file['attrs'], true)."\t"; }
+  $a .= \PHPStrap\Util\Html::tag('style', do_action( "footer-styles" ), [], ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8"], false) . "\t";
+	foreach($GLOBALS['PACMEC']['website']['scripts']['foot'] as $file){ $a .= \PHPStrap\Util\Html::tag($file['tag'], "", [], $file['attrs'], false)."\t"; }
+  $a .= \PHPStrap\Util\Html::tag('script', do_action( "footer-scripts" ), [], ["type"=>"text/javascript", "charset"=>"UTF-8"], false);
+  echo "{$a}";
+  do_action( "footer" );
+  echo "\n";
+  if(MODE_DEBUG == true) require_once PACMEC_PATH . '.debug/footer.php';
+	return true;
+}
+
+function get_footer()
+{
+  return get_template_part("footer");
+}
+
+function get_template_directory_uri()
+{
+	return siteinfo('siteurl') . "/.pacmec/themes/{$GLOBALS['PACMEC']['theme']['text_domain']}";
 }
 /*
 
