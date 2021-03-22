@@ -21,6 +21,7 @@ pacmec_init_header();
 pacmec_init_vars();
 pacmec_init_session();
 pacmec_init_options();
+pacmec_init_system();
 pacmec_init_plugins_actives();
 pacmec_init_route();
 pacmec_validate_route();
@@ -29,6 +30,8 @@ if(siteinfo('enable_ssl') == 1 && $_SERVER["HTTPS"] != "on"){
     header("Location: https://" . $_SERVER["HTTP_HOST"] . $_SERVER["REQUEST_URI"]);
     exit("Redireccionando...");
 }
+
+
 
 pacmec_theme_check();
 pacmec_assets_globals();

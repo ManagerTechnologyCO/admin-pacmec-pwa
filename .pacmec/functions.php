@@ -46,39 +46,17 @@ function pacmec_init_header()
 	}
 }
 
-function isAdmin()
-{
-	return isUser() && validate_permission('super_user') ? true : false;
-}
-
-function isUser()
-{
-	return !isGuest() ? true : false;
-}
-
-function isGuest()
-{
-	return !isset($_SESSION['user']) ? true : false;
-}
-
-function is_session_started()
-{
-    if ( php_sapi_name() !== 'cli' ) {
-        if ( version_compare(phpversion(), '5.4.0', '>=') ) {
-            return session_status() === PHP_SESSION_ACTIVE ? TRUE : FALSE;
-        } else {
-            return session_id() === '' ? FALSE : TRUE;
-        }
-    }
-    return FALSE;
-}
-
 function siteinfo($option_name)
 {
 	if(!isset($GLOBALS['PACMEC']['options'][$option_name])){
-		return "-NaN-";
+		return "NaN";
 	}
 	return $GLOBALS['PACMEC']['options'][$option_name];
+}
+
+function infosite($option_name)
+{
+  return siteinfo($option_name);
 }
 
 function pacmec_init_vars()
@@ -97,7 +75,7 @@ function pacmec_init_vars()
     "styles" => ["head"=>[],"foot"=>[],"list"=>[]]
   ];
 	$GLOBALS['PACMEC']['session'] = null;
-	///$GLOBALS['PACMEC']['menus'] = [];
+	$GLOBALS['PACMEC']['menus'] = [];
 	$GLOBALS['PACMEC']['theme'] = [];
 	$GLOBALS['PACMEC']['plugins'] = [];
   $GLOBALS['PACMEC']['detect'] = ["langs"=>[]];
@@ -105,6 +83,8 @@ function pacmec_init_vars()
 	$GLOBALS['PACMEC']['alerts'] = [];
 	$GLOBALS['PACMEC']['total_records'] = [];
 	$GLOBALS['PACMEC']['glossary'] = [];
+  $GLOBALS['PACMEC']['glossary_txt'] = [];
+	$GLOBALS['PACMEC']['memberships']['allow_signups'] = [];
 }
 
 function pacmec_init_session()
@@ -114,46 +94,79 @@ function pacmec_init_session()
 	$GLOBALS['PACMEC']['session'] = new PACMEC\Session();
 }
 
+function pacmec_parse_value($option_value){
+  switch ($option_value) {
+    case 'true':
+      return true;
+      break;
+    case 'false':
+      return false;
+      break;
+    case 'null':
+      return null;
+      break;
+    default:
+      return $option_value;
+      break;
+  }
+}
+
 /**
  * @debug
- * foreach(Menus::allLoad() as $menu){ $GLOBALS['PACMEC']['menus'][$menu->slug] = $menu; }
+ *
  */
 function pacmec_init_options()
 {
 	foreach($GLOBALS['PACMEC']['DB']->FetchAllObject("SELECT * FROM {$GLOBALS['PACMEC']['DB']->getPrefix()}options", []) as $option){
-		$GLOBALS['PACMEC']['options'][$option->option_name] = $option->option_value;
+		$GLOBALS['PACMEC']['options'][$option->option_name] = pacmec_parse_value($option->option_value);
 	};
 	foreach($GLOBALS['PACMEC']['DB']->FetchAllObject("SELECT * FROM {$GLOBALS['PACMEC']['DB']->getPrefix()}glossary ", []) as $option){
-		$GLOBALS['PACMEC']['glossary'][$option->tag] = ["name" => $option->name] ;
+		$GLOBALS['PACMEC']['glossary'][$option->tag] = ["name" => $option->name, "id"=>$option->id];
 	};
   $GLOBALS['PACMEC']['total_records'] = $GLOBALS['PACMEC']['DB']->FetchAllObject("SELECT `table_name` AS `name`, `table_rows` AS `total` FROM {$GLOBALS['PACMEC']['DB']->getPrefix()}total_records WHERE `table_rows` IS NOT NULL", []);
 
+  $memberships = new \PACMEC\Memberships();
+	$GLOBALS['PACMEC']['memberships']['allow_signups'] = $memberships->load_signups_plans();
+	//$GLOBALS['PACMEC']['memberships'] = $GLOBALS['PACMEC']['DB']->FetchAllObject("SELECT * FROM {$GLOBALS['PACMEC']['DB']->getPrefix()}memberships WHERE `allow_signups` IN (?)", [1]);
+
+
 	$GLOBALS['PACMEC']['plugins'] = pacmec_load_plugins(PACMEC_PATH."plugins");
-  if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
-      // romper la cuerda en pedazos (idiomas y factores q)
-      preg_match_all('/([a-z]{1,8}(-[a-z]{1,8})?)\s*(;\s*q\s*=\s*(1|0\.[0-9]+))?/i', $_SERVER['HTTP_ACCEPT_LANGUAGE'], $lang_parse);
-      if (count($lang_parse[1])) {
-          // crea una lista como "es" => 0.8
-          $GLOBALS['PACMEC']['detect']['langs'] = array_combine($lang_parse[1], $lang_parse[4]);
-          // establecer por defecto en 1 para cualquiera sin factor q
-          foreach ($GLOBALS['PACMEC']['detect']['langs'] as $lang => $val) { if ($val === '') $langs[$lang] = 1; }
-          // ordenar lista según el valor
-          arsort($GLOBALS['PACMEC']['detect']['langs'], SORT_NUMERIC);
-      }
-      // if($GLOBALS['PACMEC']['glossary'][$option->tag])
-      $i = 0;
-      foreach ($GLOBALS['PACMEC']['detect']['langs'] AS $lang => $score) {
-        if($i == 0){
-          if($GLOBALS['PACMEC']['glossary'][$lang]){
-            $GLOBALS['PACMEC']['lang'] = $lang;
-          }
-          break;
-        } else {
-          break;
+
+  if(!empty($_GET['lang'])){
+    $GLOBALS['PACMEC']['lang'] = in_array($_GET['lang'], array_keys($GLOBALS['PACMEC']['glossary'])) ? $_GET['lang'] : (!empty($_COOKIE['language']) ? $_COOKIE['language'] : siteinfo("lang_default"));
+  } else if (isset($_COOKIE['language']) && !empty($_COOKIE['language'])){
+    $GLOBALS['PACMEC']['lang'] = $_COOKIE['language'];
+  } else if (siteinfo("enable_autotranslate") == true && isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
+    // romper la cuerda en pedazos (idiomas y factores q)
+    preg_match_all('/([a-z]{1,8}(-[a-z]{1,8})?)\s*(;\s*q\s*=\s*(1|0\.[0-9]+))?/i', $_SERVER['HTTP_ACCEPT_LANGUAGE'], $lang_parse);
+    if (count($lang_parse[1])) {
+        // crea una lista como "es" => 0.8
+        $GLOBALS['PACMEC']['detect']['langs'] = array_combine($lang_parse[1], $lang_parse[4]);
+        // establecer por defecto en 1 para cualquiera sin factor q
+        foreach ($GLOBALS['PACMEC']['detect']['langs'] as $lang => $val) { if ($val === '') $langs[$lang] = 1; }
+        // ordenar lista según el valor
+        arsort($GLOBALS['PACMEC']['detect']['langs'], SORT_NUMERIC);
+    }
+
+    $i = 0;
+    foreach ($GLOBALS['PACMEC']['detect']['langs'] AS $lang => $score) {
+      if($i == 0){
+        if($GLOBALS['PACMEC']['glossary'][$lang]){
+          $GLOBALS['PACMEC']['lang'] = $lang;
         }
+        break;
+      } else {
+        break;
       }
+    }
+  } else {
+    $GLOBALS['PACMEC']['lang'] = siteinfo("lang_default");
   }
-  if($GLOBALS['PACMEC']['lang'] == null){ $GLOBALS['PACMEC']['lang'] = siteinfo('lang_default'); }
+  setcookie('language', $GLOBALS['PACMEC']['lang']);
+
+	foreach($GLOBALS['PACMEC']['DB']->FetchAllObject("SELECT * FROM {$GLOBALS['PACMEC']['DB']->getPrefix()}glossary_txt WHERE `glossary_id` IN (?) ", [$GLOBALS['PACMEC']['glossary'][$GLOBALS['PACMEC']['lang']]['id']]) as $option){
+		$GLOBALS['PACMEC']['glossary_txt'][$option->slug] = $option->text;
+	};
 }
 
 function php_file_tree_dir_JSON_exts($directory, $return_link, $extensions = array(), $first_call = true, $step=0, $limit=1)
@@ -173,7 +186,6 @@ function php_file_tree_dir_JSON_exts($directory, $return_link, $extensions = arr
 			}
 		}
 	}
-
 	$php_file_tree_array = [];
 	if( count($file) > 2 ) {
 		foreach( $file as $this_file ) {
@@ -185,25 +197,11 @@ function php_file_tree_dir_JSON_exts($directory, $return_link, $extensions = arr
 				$item->directory = $directory;
 				$item->link = "{$directory}/{$this_file}";
 				$item->child = [];
-
 				if( is_dir("$directory/$this_file") && $step>$limit) {
 					$php_file_tree = php_file_tree_dir_JSON("$directory/$this_file", $return_link ,$extensions, false);
 					$item->child = php_file_tree_dir_JSON("$directory/$this_file", $return_link ,$extensions, false, $step+1, $limit);
 				}
-
 				$php_file_tree_array[] = $item;
-				/*
-
-				$item->link = str_replace("[link]", "$directory/" . urlencode($this_file), $return_link);
-				# $item->more = [];
-
-				if( is_dir("$directory/$this_file") ) {
-					$item->isFolder = true;
-					$item->more = php_file_tree_dir_JSON("$directory/$this_file", $return_link ,$extensions, false, $adapter);
-				} else {
-					$item->isFile = true;
-				}*/
-
 			}
 		}
 	}
@@ -307,9 +305,7 @@ function pacmec_init_plugins_actives()
 {
 	$plugs = [];
 	foreach(explode(',', siteinfo('plugins_activated')) as $plug){
-		// echo json_encode($plug);
 		if(isset($GLOBALS['PACMEC']['plugins'][$plug])){
-			// echo "\t\t\t\tExiste \n";
 			$GLOBALS['PACMEC']['plugins'][$plug]['active'] = true;
 			$plugs[] = $plug;
 			require_once ($GLOBALS['PACMEC']['plugins'][$plug]['path']);
@@ -331,10 +327,22 @@ function pacmec_init_plugins_actives()
       ],
     ]);
     /*
-    $GLOBALS['PACMEC']['alerts'][] = ;*/
+    $GLOBALS['PACMEC']['alerts'][] =;*/
     // exit;
   }
 	// echo "\t--- plugins validados ---\n";
+}
+
+function current_url()
+{
+  return $GLOBALS['PACMEC']['req_url'];
+}
+
+function pacmec_init_system()
+{
+	foreach(glob(PACMEC_PATH."system/init/*.php") as $file){
+		require_once $file;
+  }
 }
 
 function pacmec_init_route()
@@ -344,7 +352,25 @@ function pacmec_init_route()
 	$currentUrl = isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : $_SERVER['REQUEST_URI'];
 	$currentUrl = (strtok($currentUrl, '?'));
 	$reqUrl = str_replace([$site_url], '', $currentUrl);
-	$detectAPI = explode('/', $reqUrl);
+	$detectAPI = explode("/", $reqUrl);
+  if(isset($detectAPI[1]) && $detectAPI[1] == 'pacmec-api'){
+    require_once 'api.php';
+    exit;
+
+    // use \FG\ApiRest\Api;
+    // use \FG\ApiRest\Config;
+    // use \FG\ApiRest\RequestFactory;
+    // use \FG\ApiRest\ResponseUtils;
+  	$infoAPI = '{
+  		"info":{
+  			"title":"'.infosite("sitename").'",
+  			"description":"'.infosite("sitedescr").'",
+  			"version":"3.0.0"
+  		}
+  	}';
+
+    exit;
+  }
 	$GLOBALS['PACMEC']['req_url'] = $reqUrl;
   $model_route = new PACMEC\ROUTE([
     'page_slug'=>$reqUrl
@@ -359,6 +385,58 @@ function pacmec_init_route()
 function pacmec_validate_route()
 {
   if($GLOBALS['PACMEC']['route']->theme == null) $GLOBALS['PACMEC']['route']->theme = siteinfo('theme_default');
+
+  add_action('page_title', function(){ if(isset($GLOBALS['PACMEC']['route']->id)){ echo (pageinfo('page_title') !== 'NaN') ? pageinfo('page_title') : _autoT(pageinfo('title')); } });
+  add_action('page_titpage_descriptionle', function(){ if(isset($GLOBALS['PACMEC']['route']->id)){ echo (pageinfo('page_description') !== 'NaN') ? pageinfo('page_description') : _autoT(pageinfo('description')); } });
+  add_action('page_body', function(){
+  	if(isset($GLOBALS['PACMEC']['route']->request_uri) && $GLOBALS['PACMEC']['route']->request_uri !== ""){
+  		# $GLOBALS['PACMEC']['route']->content
+  		echo do_shortcode($GLOBALS['PACMEC']['route']->content);
+
+      /* javascript
+      foreach ($GLOBALS['PACMEC']['route']->components as $component) {
+        $attrs = [];
+        foreach ($component->data as $key => $value) {
+          if(is_object($value) || is_array($value)) $value = base64_encode(json_encode($value));
+          $attrs[$key] = $value;
+        }
+        echo do_shortcode(\PHPStrap\Util\Shortcode::tag($component->component, "", [], $attrs, false) . "\n");
+      }*/
+  	}
+  	else {
+  		echo do_shortcode(
+  			errorHtml("Lo sentimos, no se encontro el archivo o página.", "Ruta no encontrada")
+  		);
+  	}
+  });
+  /*
+  add_action('head', function(){
+    $r = "\t<script type=\"text/javascript\" charset=\"UTF-8\">";
+    $r .= "
+      window.mtAsyncInit = function() {
+        PACMEC.init({
+      		api_server : 'https://pacmec.managertechnology.com.co',
+      		appId      : 'managertechnology',
+      		token      : 'pacmec',
+      		Wmode      : '".infosite('wco_mode')."',
+      		Wversion      : 'v1',
+      	});
+      };";
+    $r .= "
+    </script>";
+    echo $r;
+    //Wmode      : '<?= WCO_MODE; ?',
+  });*/
+}
+
+function pacmec_decode_64_sys($label)
+{
+  return json_decode(base64_decode(infosite($label)));
+}
+
+function errorHtml(string $error_message="Ocurrio un problema.", $error_title="Error"){
+	// '<a href="/pacmec/hola-mundo">CONTÁCTENOS <i class="fa fa-angle-right" aria-hidden="true"></i></a>'
+	return sprintf("<h1>%s</h1><p>%s</p>", $error_title, $error_message);
 }
 
 function pacmec_load_theme($path)
@@ -503,7 +581,7 @@ function pacmec_assets_globals()
   add_style_head(siteinfo('siteurl')   . "/.pacmec/system/assets/css/pacmec.css",  ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8"], 1, false);
   add_style_head(siteinfo('siteurl')   . "/.pacmec/system/assets/css/plugins.css", ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8"], 0.99, false);
   add_scripts_head(siteinfo('siteurl') . "/.pacmec/system/assets/js/plugins.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
-  add_scripts_foot(siteinfo('siteurl') . "/.pacmec/system/assets/js/sdk.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 0, false);
+  add_scripts_foot(siteinfo('siteurl') . "/.pacmec/system/assets/js/sdk.js"."?&cache=".rand(),   ["type"=>"text/javascript", "charset"=>"UTF-8"], 0, false);
 
   if(siteinfo('enable_pwa') == true) add_scripts_foot(siteinfo('siteurl') . "/.pacmec/system/assets/js/main.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 0, false);
 }
@@ -539,12 +617,27 @@ function route_active()
 	}
 }
 
-function get_template_part($file)
+/**
+ * @param string $file <p>File</p>
+ * @param array|object $attrs <p>attr</p>
+**/
+function get_template_part($file, $atts=null)
 {
-	if(!is_file("{$GLOBALS['PACMEC']['theme']['dir']}/{$file}.php") || !file_exists("{$GLOBALS['PACMEC']['theme']['dir']}/{$file}.php")){
-		exit("Error critico en tema, no existe archivo. {$GLOBALS['PACMEC']['theme']['text_domain']} -> {$file}. {$GLOBALS['PACMEC']['theme']['dir']}/{$file}.php");
-	}
-	require_once "{$GLOBALS['PACMEC']['theme']['dir']}/{$file}.php";
+  try {
+  	if(!is_file("{$GLOBALS['PACMEC']['theme']['dir']}/{$file}.php") || !file_exists("{$GLOBALS['PACMEC']['theme']['dir']}/{$file}.php")){
+      throw new \Exception("No existe archivo. {$GLOBALS['PACMEC']['theme']['text_domain']} -> {$file}. {$GLOBALS['PACMEC']['theme']['dir']}/{$file}.php", 1);
+  	}
+    if(isset($atts) && (is_array($atts) || is_object($atts))){
+      foreach ($atts as $id_assoc => $valor) {
+        if(!isset(${$id_assoc}) || ${$id_assoc} !== $valor){
+          ${$id_assoc} = $valor;
+        }
+      }
+    }
+  	require_once "{$GLOBALS['PACMEC']['theme']['dir']}/{$file}.php";
+  } catch(\Exception $e) {
+    echo("Error critico en tema: {$e->getMessage()}");
+  }
 }
 
 function language_attributes()
@@ -618,11 +711,6 @@ function pacmec_head()
 	return true;
 }
 
-function do_action(string $tag, $arg = '') : bool
-{
-	return $GLOBALS['PACMEC']['hooks']->do_action( $tag, $arg );
-}
-
 function pacmec_foot()
 {
   stable_usort($GLOBALS['PACMEC']['website']['styles']['foot'], 'pacmec_ordering_by_object_asc');
@@ -648,7 +736,354 @@ function get_template_directory_uri()
 {
 	return siteinfo('siteurl') . "/.pacmec/themes/{$GLOBALS['PACMEC']['theme']['text_domain']}";
 }
+
+function the_content()
+{
+  do_action('page_body');
+  //echo do_shortcode($GLOBALS['PACMEC']['route']->content);
+  #foreach ($GLOBALS['PACMEC']['route']->components as $component) { echo do_shortcode(\PHPStrap\Util\Shortcode::tag($component->component, "", [], $component->data, false) . "\n"); }
+}
+
+/**
+ * Hooks a function on to a specific action.
+ *
+ * @param    string       $tag              <p>
+ *                                          The name of the action to which the
+ *                                          <tt>$function_to_add</tt> is hooked.
+ *                                          </p>
+ * @param    string|array $function_to_add  <p>The name of the function you wish to be called.</p>
+ * @param    int          $priority         <p>
+ *                                          [optional] Used to specify the order in which
+ *                                          the functions associated with a particular
+ *                                          action are executed (default: 50).
+ *                                          Lower numbers correspond with earlier execution,
+ *                                          and functions with the same priority are executed
+ *                                          in the order in which they were added to the action.
+ *                                          </p>
+ * @param     string      $include_path     <p>[optional] File to include before executing the callback.</p>
+ *
+ * @return bool
+ */
+function add_action(string $tag, $function_to_add, int $priority = 50, string $include_path = null) : bool {
+	return $GLOBALS['PACMEC']['hooks']->add_action($tag, $function_to_add, $priority, $include_path);
+}
+
+/**
+ * Execute functions hooked on a specific action hook.
+ *
+ * @param    string $tag     <p>The name of the action to be executed.</p>
+ * @param    mixed  $arg     <p>
+ *                           [optional] Additional arguments which are passed on
+ *                           to the functions hooked to the action.
+ *                           </p>
+ *
+ * @return   bool            <p>Will return false if $tag does not exist in $filter array.</p>
+ */
+function do_action(string $tag, $arg = ''): bool {
+	return $GLOBALS['PACMEC']['hooks']->do_action($tag, $arg);
+}
+
+/**
+ * Search content for shortcodes and filter shortcodes through their hooks.
+ *
+ * <p>
+ * <br />
+ * If there are no shortcode tags defined, then the content will be returned
+ * without any filtering. This might cause issues when plugins are disabled but
+ * the shortcode will still show up in the post or content.
+ * </p>
+ *
+ * @param string $content <p>Content to search for shortcodes.</p>
+ *
+ * @return string <p>Content with shortcodes filtered out.</p>
+ */
+function do_shortcode(string $content) : string {
+	return $GLOBALS['PACMEC']['hooks']->do_shortcode($content);
+}
+
+function shortcode_atts_global($atts, $shortcode = '') : array {
+  $pairs = [
+    "definition" => null,
+    "userStatus" => null,
+    "glossary" => null,
+    "lang_labels" => null,
+    "me" => null,
+    "membership" => null,
+    "wallets" => null,
+    "wallets_balance" => null,
+    "beneficiaries" => null,
+    "payment" => null,
+    "notifications" => null,
+    "page" => null,
+    "name" => null,
+    "title" => "title_front",
+    "subtitle" => "title_back",
+    "description" => "content",
+    "content" => "description",
+    "picture" => null,
+    "pictureBG" => "bg",
+    "videoProvider" => "video_provider",
+    "videoID" => "vid",
+    "recordThumb" => null,
+    "link" => null,
+    "icon" => null,
+    "enable_search" => "form_search",
+    "icons" => "icons_menu",
+    "steps" => null,
+    "counters" => null,
+  ];
+  $pairs_condictions = [
+    "videoActive" => ["videoID","videoProvider"],
+    //"enable_search" => ["enable_search"],
+  ];
+  $args = [];
+  foreach ($pairs as $key => $value) {
+    $args[$key] = null;
+    if($value !== null && isset($atts[$value])) $args[$key] = $atts[$value];
+    else if($value !== null && isset($atts["data-{$value}"])) $args[$key] = $atts["data-{$value}"];
+    else if(isset($atts[$key])) $args[$key] = $atts[$key];
+  }
+  foreach ($pairs_condictions as $key => $values) {
+    $i = 0;
+    foreach ($values as $a) {
+      if(isset($args[$a]) !== null && isset($args[$a]) !== null) $i++;
+    }
+    if(count($values) === $i) $args[$key] = true;
+    else $args[$key] = false;
+  }
+  $repair = shortcode_atts($args, $atts, $shortcode);
+  $repair = array_merge($repair, [
+    "request_uri" => current_url(),
+    "lang" => $GLOBALS['PACMEC']['lang'],
+  ]);
+  return $repair;
+}
+
+/**
+ * Add hook for shortcode tag.
+ *
+ * <p>
+ * <br />
+ * There can only be one hook for each shortcode. Which means that if another
+ * plugin has a similar shortcode, it will override yours or yours will override
+ * theirs depending on which order the plugins are included and/or ran.
+ * <br />
+ * <br />
+ * </p>
+ *
+ * Simplest example of a shortcode tag using the API:
+ *
+ * <code>
+ * // [footag foo="bar"]
+ * function footag_func($atts) {
+ *  return "foo = {$atts[foo]}";
+ * }
+ * add_shortcode('footag', 'footag_func');
+ * </code>
+ *
+ * Example with nice attribute defaults:
+ *
+ * <code>
+ * // [bartag foo="bar"]
+ * function bartag_func($atts) {
+ *  $args = shortcode_atts(array(
+ *    'foo' => 'no foo',
+ *    'baz' => 'default baz',
+ *  ), $atts);
+ *
+ *  return "foo = {$args['foo']}";
+ * }
+ * add_shortcode('bartag', 'bartag_func');
+ * </code>
+ *
+ * Example with enclosed content:
+ *
+ * <code>
+ * // [baztag]content[/baztag]
+ * function baztag_func($atts, $content='') {
+ *  return "content = $content";
+ * }
+ * add_shortcode('baztag', 'baztag_func');
+ * </code>
+ *
+ * @param string   $tag  <p>Shortcode tag to be searched in post content.</p>
+ * @param callable $callback <p>Hook to run when shortcode is found.</p>
+ *
+ * @return bool
+ */
+function add_shortcode($tag, $callback) : bool {
+	if($GLOBALS['PACMEC']['hooks']->shortcode_exists($tag) == false){
+		/*
+		if(!isset($_GET['editor_front'])){
+		} else {
+			return $GLOBALS['PACMEC']['hooks']->add_shortcode( $tag, function() use ($tag) { echo "[{$tag}]"; } );
+			return true;
+		};*/
+		return $GLOBALS['PACMEC']['hooks']->add_shortcode( $tag, $callback );
+	} else {
+		return false;
+	}
+}
+
+/**
+*
+* Add
+*
+* @param array   $pairs       *
+* @param array   $atts        *
+* @param string  $shortcode   (Optional)
+*
+* @return array
+*/
+function shortcode_atts($pairs, $atts, $shortcode = ''): array {
+	return $GLOBALS['PACMEC']['hooks']->shortcode_atts($pairs, $atts, $shortcode);
+}
+
+/**
+ * Adds Hooks to a function or method to a specific filter action.
+ *
+ * @param    string              $tag             <p>
+ *                                                The name of the filter to hook the
+ *                                                {@link $function_to_add} to.
+ *                                                </p>
+ * @param    string|array|object $function_to_add <p>
+ *                                                The name of the function to be called
+ *                                                when the filter is applied.
+ *                                                </p>
+ * @param    int                 $priority        <p>
+ *                                                [optional] Used to specify the order in
+ *                                                which the functions associated with a
+ *                                                particular action are executed (default: 50).
+ *                                                Lower numbers correspond with earlier execution,
+ *                                                and functions with the same priority are executed
+ *                                                in the order in which they were added to the action.
+ *                                                </p>
+ * @param string                 $include_path    <p>
+ *                                                [optional] File to include before executing the callback.
+ *                                                </p>
+ *
+ * @return bool
+ */
+function add_filter(string $tag, $function_to_add, int $priority = 50, string $include_path = null): bool
+{
+  return $GLOBALS['PACMEC']['hooks']->add_filter($tag, $function_to_add, $priority, $include_path);
+}
+
+
+/**
+*
+* Traduccion automatica
+*
+* @param string   $label       *
+* @param string   $lang        (Optional)
+*
+* @return string
+*/
+function pacmec_translate_label($label, $lang=null) : string
+{
+  if(isset($GLOBALS['PACMEC']['glossary_txt'][$label])) return $GLOBALS['PACMEC']['glossary_txt'][$label];
+  return "Þ{{ $label }}";
+}
+
+
+function pacmec_load_menu($menu_slug="")
+{
+  try {
+    $m_s = $menu_slug;
+    if(isset($GLOBALS['PACMEC']['meus'][$m_s])){
+      throw new \Exception("El menu ya fue cargado.");
+      return $GLOBALS['PACMEC']['meus'][$m_s];
+    } else {
+      #$model_menu = new \PACMEC\Menu(["by_slug"=>$m_s]);
+      $model_menu = new \PACMEC\Menu();
+      $model_menu->getBy('slug', $m_s);
+      if($model_menu->id>0){
+        return $model_menu;
+      } else {
+        throw new \Exception("ÞERROR:(Menu no encontrado)");
+      }
+    }
+    if($menu == null){
+      throw new \Exception("ÞERROR:(Menu no invalido)");
+    } else {
+      return "repair: ".json_encode($meu);
+    }
+  } catch (\Exception $e) {
+    echo $e->getMessage();
+    return false;
+  }
+}
+
+/**
+*
+* Alias rápido para Traduccion
+*
+* @param string $label Label a traduccir
+*
+* @return string
+*/
+function _autoT($label) : string
+{
+  return pacmec_translate_label($label);
+}
+
+/**
+* Session
+*/
+function is_session_started()
+{
+    if ( php_sapi_name() !== 'cli' ) {
+        if ( version_compare(phpversion(), '5.4.0', '>=') ) {
+            return session_status() === PHP_SESSION_ACTIVE ? TRUE : FALSE;
+        } else {
+            return session_id() === '' ? FALSE : TRUE;
+        }
+    }
+    return FALSE;
+}
+
+function userinfo($option_name){
+	return isset($GLOBALS['PACMEC']['session']->{$option_name}) ? $GLOBALS['PACMEC']['session']->{$option_name} : "";
+}
+
+function meinfo(){
+	return isset($GLOBALS['PACMEC']['session']) ? $GLOBALS['PACMEC']['session'] : [];
+}
+
+function validate_permission($permission_label){
+	$permission_label = $permission_label == null ? 'guest' : $permission_label;
+	if($permission_label == "guest"){ return true; }
+	if(!isset(userinfo('user')->id) || userinfo('user')->id == "" || userinfo('user')->id <= 0){ return false; }
+	$permissions = userinfo('permissions_items');
+	// $permissions = userinfo('permissions');
+	if(isset($permissions[$permission_label])){ return true; }
+	return false;
+}
+
+function isAdmin(){
+	return isUser() && validate_permission('super_user') ? true : false;
+}
+
+function isUser(){
+	return !(isGuest());
+}
+
+function isGuest(){
+	return !isset($_SESSION['user']) ? true : false;
+}
+
+function me($key)
+{
+  return isset($_SESSION['user'][$key]) ? $_SESSION['user'][$key] : null;
+}
+
 /*
+crear shortcode
+
+add_shortcode('component', FUNCTION => recibe attrs globales beta y estos que se puedan extender desde temas o plugins
+
+
+
 
 function cargarControlador($controller){
  $controlador = ucwords($controller).'Controller';

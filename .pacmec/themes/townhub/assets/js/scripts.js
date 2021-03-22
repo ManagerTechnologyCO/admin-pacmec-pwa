@@ -1,3 +1,30 @@
+function insertParam(key, value) {
+    key = encodeURIComponent(key);
+    value = encodeURIComponent(value);
+
+    // kvp looks like ['key1=value1', 'key2=value2', ...]
+    var kvp = document.location.search.substr(1).split('&');
+    let i=0;
+
+    for(; i<kvp.length; i++){
+        if (kvp[i].startsWith(key + '=')) {
+            let pair = kvp[i].split('=');
+            pair[1] = value;
+            kvp[i] = pair.join('=');
+            break;
+        }
+    }
+
+    if(i >= kvp.length){
+        kvp[kvp.length] = [key,value].join('=');
+    }
+
+    // can return this or...
+    let params = kvp.join('&');
+
+    // reload page with new params
+    document.location.search = params;
+}
 //   all ------------------
 function initTowhub() {
     "use strict";
@@ -386,6 +413,10 @@ function initTowhub() {
         e.preventDefault();
         $(".show-more-snopt-tooltip").toggleClass("show-more-snopt-tooltip_vis");
     });
+    tippy('.tolt2', {
+			animation: 'scale',
+			arrow: true
+		});
  // calc ------------------
     $("form[name=rangeCalc]").jAutoCalc("destroy");
     $("form[name=rangeCalc]").jAutoCalc({
@@ -510,7 +541,8 @@ function initTowhub() {
             $.post(a, {
                 name: $("#name").val(),
                 email: $("#email").val(),
-                comments: $("#comments").val()
+                comments: $("#comments").val(),
+                phone: $("#phone").val()
             }, function (a) {
                 document.getElementById("message").innerHTML = a;
                 $("#message").slideDown("slow");
@@ -741,7 +773,7 @@ function initTowhub() {
 	$(".close-lpt").on("click", function () {
         $(".lost-password-tootip").removeClass("lpt_vis");
     });
- 
+
 	//   Uplaod ------------------
 	$('.fuzone input').each(function () {
 		$(this).on('change', function () {

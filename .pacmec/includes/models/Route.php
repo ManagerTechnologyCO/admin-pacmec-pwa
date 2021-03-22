@@ -22,6 +22,7 @@ class Route extends ModeloBase
 	public $title = 'no_found';
 	public $theme = null;
 	public $description = 'No Found';
+	public $content = '';
 	public $request_uri = '/404';
 	public $component = 'pages-error';
 	public $components = [];
@@ -64,7 +65,8 @@ class Route extends ModeloBase
 			if(is_object($arg) || is_array($arg)){
 				$arg = (array) $arg;
 				foreach($arg as $k=>$v){
-					$this->{$k} = $v;
+					# if($k=="content") $v = do_shortcode($v);
+					$this->{$k} = ($v);
 				}
         $this->getMeta();
         $this->getComponents();
@@ -81,7 +83,7 @@ class Route extends ModeloBase
   {
     try {
       if($this->id>0){
-        $result = $GLOBALS['PACMEC']['DB']->FetchAllObject("SELECT * FROM `{$this->getTable()}_components` WHERE `route_id`=? ORDER BY `ordering` DESC", [$this->id]);
+        $result = $GLOBALS['PACMEC']['DB']->FetchAllObject("SELECT * FROM `{$this->getTable()}_components` WHERE `route_id`=? ORDER BY `ordering` ASC", [$this->id]);
         if(is_array($result)) {
           $this->components = [];
           foreach ($result as $component) {

@@ -26,7 +26,7 @@ if(trim($name) == '') {
 } else if(trim($comments) == '') {
 	echo '<div class="error_message">Enter your message.</div>';
 	exit();
-} 
+}
 
 if(get_magic_quotes_gpc()) {
 	$comments = stripslashes($comments);
@@ -38,7 +38,7 @@ if(get_magic_quotes_gpc()) {
 // Example $address = "joe.doe@yourdomain.com";
 
 //$address = "example@themeforest.net";
-$address = "dimagalishev@gmail.com.tr";
+$address = "webmaster@pacmec.managertechnology.com.co";
 
 
 // Configuration option.
@@ -46,16 +46,16 @@ $address = "dimagalishev@gmail.com.tr";
 
 // Example, $e_subject = '$name . ' has contacted you via Your Website.';
 
-$e_subject = 'You\'ve been contacted by ' . $name . '.';
+$e_subject = 'Ha sido contactado por  ' . $name . '.';
 
 
 // Configuration option.
 // You can change this if you feel that you need to.
 // Developers, you may wish to add more fields to the form, in which case you must be sure to add them here.
 
-$e_body = "You have been contacted by: $name" . PHP_EOL . PHP_EOL;
+$e_body = "Ha sido contactado por: $name" . PHP_EOL . PHP_EOL;
 $e_reply = "E-mail: $email\r\nPhone: $phone";
-$e_content = "Message:\r\n$comments" . PHP_EOL . PHP_EOL;
+$e_content = "Mensaje:\r\n$comments" . PHP_EOL . PHP_EOL;
 
 
 $msg = wordwrap( $e_body . $e_content . $e_reply, 70 );
@@ -67,16 +67,12 @@ $headers .= "Content-type: text/plain; charset=utf-8" . PHP_EOL;
 $headers .= "Content-Transfer-Encoding: quoted-printable" . PHP_EOL;
 
 if(mail($address, $e_subject, $msg, $headers)) {
-
-	// Email has sent successfully, echo a success page.
-
 	echo "<fieldset>";
-	echo "<div id='success_page'>";
-	echo "<h3>Email Sent Successfully.</h3>";
-	echo "<p>Thank you <strong>$name</strong>, your message has been submitted to us.</p>";
-	echo "</div>";
+		echo "<div id='success_page'>";
+		echo "<h3>Email Sent Successfully.</h3>";
+		echo "<p>Thank you <strong>$name</strong>, your message has been submitted to us.</p>";
+		echo "</div>";
 	echo "</fieldset>";
-
 } else {
 
 	echo 'ERROR!';

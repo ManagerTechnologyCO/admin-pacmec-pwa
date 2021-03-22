@@ -20,7 +20,7 @@ Class Session
 	public  $permission_group   = null;
 	public  $permissions_items  = [];
 	public  $permissions        = [];
-	public  $notifications             = [];
+	public  $notifications      = [];
 
 	/**
 	* Inicializa la sesión

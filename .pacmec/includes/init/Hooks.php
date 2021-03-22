@@ -1,20 +1,6 @@
 <?php
 /**
  *
- * @author     FelipheGomez <feliphegomez@gmail.com>
- * @package    PACMEC
- * @category   Helper
- * @copyright  2020-2021 Manager Technology CO
- * @license    license.txt
- * @version    Release: @package_version@
- * @link       http://github.com/ManagerTechnologyCO/PACMEC
- * @version    1.0.1
- */
-
-declare(strict_types=1);
-namespace PACMEC;
-
-/**
  * PHP Hooks Class (Modified by FelipheGomez)
  *
  * <p>
@@ -39,7 +25,6 @@ namespace PACMEC;
  * @link        https://github.com/voku/PHP-Hooks/
  * @author      Damien "Mistic" Sorel <contact@git.strangeplanet.fr>
  * @link        http://www.strangeplanet.fr
- *
  * @license     GNU General Public License v3.0 - license.txt
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -49,7 +34,21 @@ namespace PACMEC;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  *
- * @package     PACMEC\helper
+ * @author     FelipheGomez <feliphegomez@gmail.com>
+ * @package    PACMEC
+ * @category   Helper
+ * @version    Release: @package_version@
+ * @version    1.0.1
+ */
+
+declare(strict_types=1);
+namespace PACMEC;
+
+/**
+ *
+ *
+ *
+ * @package     PACMEC
  */
 class Hooks
 {

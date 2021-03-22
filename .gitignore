@@ -3,3 +3,4 @@
 .pacmec\.prv\settings.php
 .pacmec\themes\townhub\origin
 .pacmec\themes\townhub\License
+cache_user_sessions\*

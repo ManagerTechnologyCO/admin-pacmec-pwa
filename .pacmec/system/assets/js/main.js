@@ -1,3 +1,4 @@
+/*
 window.onload = () => {
   'use strict';
 
@@ -5,4 +6,12 @@ window.onload = () => {
     navigator.serviceWorker
              .register('./sw.js');
   }
+}
+*/
+try {
+  console.log("main RUN.")
+} catch (e) {
+
+} finally {
+  console.log("main Finally.")
 }
