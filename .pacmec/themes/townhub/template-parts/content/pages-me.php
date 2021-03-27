@@ -7,6 +7,9 @@
  * @copyright  2020-2021 Manager Technology CO
  * @version    1.0.1
  */
+if(isGuest()) echo "<meta http-equiv=\"refresh\" content=\"0;URL='".infosite("homeurl")."'\" /> ";
+$membership = meMembership();
+$meinfo = meinfo();
 ?>
 <div>
 	<div class="content" v-if="me!==null">
@@ -15,13 +18,13 @@
 				<div class="tfp-btn">
 					<span><?= _autoT('membership'); ?>: </span>
           <?php if (isset($membership)): ?>
-            <strong><?= _autoT($membership!==null? _autoT('membership_' . $membership->membership->id):'membership_expired'); ?></strong>
+            <strong><?= (isMember()? _autoT('membership_' . $membership->membership->id):'membership_expired'); ?></strong>
           <?php endif; ?>
 				</div>
 				<div class="tfp-det">
 					<!--//<p>You Are on <a href="#">Extended</a> . Use link bellow to view details or upgrade. </p>-->
-          <?php if (isset($membership)): ?>
-            <p><?= _autoT($membership!==null? _autoT('membership_' . $membership->membership->id . '_description'):'membership_expired'); ?></p>
+          <?php if (isMember()): ?>
+            <p><?= _autoT($membership!==null ? _autoT('membership_' . $membership->membership->id . '_description') : 'membership_expired'); ?></p>
           <?php endif; ?>
           <?php if (isset($membership->id)&&$membership->id>0): ?>
             <a href="/me/membership" class="tfp-det-btn color2-bg"><?= _autoT('view_membership'); ?></a>
@@ -39,13 +42,16 @@
 							<div class="dashboard-header-stats">
 								<div class="swiper-container">
 									<div class="swiper-wrapper">
-										<div class="swiper-slide">
-											<div class="dashboard-header-stats-item">
-												<i class="fal fa-map-marked"></i>
-												<?= _autoT('wallets'); ?>
-												<span>{{wallets.length}}</span>
+										<?php if (isMember()): ?>
+											<div class="swiper-slide">
+												<div class="dashboard-header-stats-item">
+													<i class="fal fa-map-marked"></i>
+													<?= _autoT('wallets'); ?>
+													<span> <?= count($meinfo->wallets); ?> </span>
+												</div>
 											</div>
-										</div>
+										<?php endif; ?>
+										<!--//
 										<div class="swiper-slide">
 											<div class="dashboard-header-stats-item">
 												<i class="fal fa-map-marked"></i>
@@ -53,11 +59,12 @@
 												<span>{{notifications.length}}</span>
 											</div>
 										</div>
+										-->
 										<div class="swiper-slide">
 											<div class="dashboard-header-stats-item">
 												<i class="fal fa-map-marked"></i>
 												<?= _autoT('wallets_balance'); ?>
-												<span>${{wallets_balance.toLocaleString(); ?></span>
+												<span>$<?= ($meinfo->balance_total); ?></span>
 											</div>
 										</div>
 									</div>
@@ -101,15 +108,17 @@
 					<div class="fixed-bar fl-wrap" id="dash_menu">
 						<div class="user-profile-menu-wrap fl-wrap block_box">
 							<div class="user-profile-menu">
+							<?php if($meinfo->payment == null): ?>
 								<ul class="no-list-style" v-if="payment == null">
 									<li>
-										<a href="/me/payment">
+										<a href="/me/add/payment">
 											<i class="fas fa-credit-card-front"></i>
 											<?= _autoT('payment_auto'); ?>
 											<span style="width: auto;border-radius: 5px;"><?= _autoT('important'); ?> </span>
 										</a>
 									</li>
 								</ul>
+								<?php endif; ?>
                 <?= do_shortcode('[pacmec-ul-no-list-style class="no-list-style" menu_slug="me_profile_memberships"][/pacmec-ul-no-list-style]'); ?>
                 <?= do_shortcode('[pacmec-ul-no-list-style class="no-list-style" menu_slug="me_profile"][/pacmec-ul-no-list-style]'); ?>
 							</div>
@@ -117,8 +126,9 @@
 					</div>
 				</div>
 				<div class="col-md-9">
-          <?= json_encode($_SESSION, JSON_PRETTY_PRINT); ?>
-					<p v-if="page===null"><?= _autoT('loading'); ?></p>
+          <?php
+					//echo json_encode($_SESSION, JSON_PRETTY_PRINT);
+					?>
 					<?php the_content(); ?>
 				</div>
 			</div>

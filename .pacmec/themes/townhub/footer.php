@@ -7,9 +7,10 @@
  * @copyright  2020-2021 Manager Technology CO
  * @version    1.0.1
  */
+$contact_info = pacmec_decode_64_sys('site_info');
 ?>
           <footer class="main-footer fl-wrap">
-              <!-- footer-header-->
+            <?php if(infosite('ajaxChimp_enabled')==true && infosite('ajaxChimp_element') !== "NaN"): ?>
               <div class="footer-header fl-wrap grad ient-dark">
                   <div class="container">
                       <div class="row">
@@ -23,7 +24,7 @@
                               <div class="subscribe-widget">
                                   <div class="subcribe-form">
                                       <form id="subscribe">
-                                          <input class="enteremail fl-wrap" name="email" id="subscribe-email" placeholder="Enter Your Email" spellcheck="false" type="text">
+                                          <input class="enteremail fl-wrap" name="email" id="subscribe-email" placeholder="<?= _autoT('enter_your_mail'); ?>" spellcheck="false" type="text">
                                           <button alt="<?= _autoT('subscribe_newsletter_title')?>" title="<?= _autoT('subscribe_newsletter_title')?>" type="submit" id="subscribe-button" class="subscribe-button"><i class="fal fa-envelope"></i></button>
                                           <label for="subscribe-email" class="subscribe-message"></label>
                                       </form>
@@ -33,37 +34,40 @@
                       </div>
                   </div>
               </div>
-              <!-- footer-header end-->
-              <!--footer-inner-->
+            <?php endif; ?>
+
               <div class="footer-inner   fl-wrap">
                   <div class="container">
                       <div class="row">
-                          <!-- footer-widget-->
-                          <div class="col-md-4">
+                          <?php
+                            $i = 0;
+                            $i += infosite('enable_recents_blogs') == true ? 1 : 0;
+                            $i += infosite('socials_twitter_widget') == true ? 1 : 0;
+                          ?>
+                          <div class="<?= $i==2?'col-md-4':($i==1?'col-md-6':'col-md-12'); ?>">
                               <div class="footer-widget fl-wrap">
                                   <div class="footer-logo"><a href="index.html"><img src="images/logo.png" alt=""></a></div>
                                   <div class="footer-contacts-widget fl-wrap">
-                                      <p>In ut odio libero, at vulputate urna. Nulla tristique mi a massa convallis cursus. Nulla eu mi magna. Etiam suscipit commodo gravida.   </p>
+                                      <p><?= infosite('sitedescr'); ?></p>
                                       <ul  class="footer-contacts fl-wrap no-list-style">
-                                          <li><span><i class="fal fa-envelope"></i> Mail :</span><a href="#" target="_blank">yourmail@domain.com</a></li>
-                                          <li> <span><i class="fal fa-map-marker"></i> Adress :</span><a href="#" target="_blank">USA 27TH Brooklyn NY</a></li>
-                                          <li><span><i class="fal fa-phone"></i> Phone :</span><a href="#">+7(111)123456789</a></li>
+                                          <?php if(is_array($contact_info)): ?>
+                                          <?php foreach($contact_info as $ctn_i => $ctn): ?>
+                        										<li>
+                        											<span><i class="<?= $ctn->icon; ?>"></i> <?= _autoT($ctn->slug); ?> :</span>
+                        											<a href="#" target="_blank"><?= $ctn->text; ?></a>
+                        										</li>
+                                          <?php endforeach; ?>
+                                          <?php endif; ?>
                                       </ul>
                                       <div class="footer-social">
-                                          <span>Find  us on: </span>
-                                          <ul class="no-list-style">
-                                              <li><a href="#" target="_blank"><i class="fab fa-facebook-f"></i></a></li>
-                                              <li><a href="#" target="_blank"><i class="fab fa-twitter"></i></a></li>
-                                              <li><a href="#" target="_blank"><i class="fab fa-instagram"></i></a></li>
-                                              <li><a href="#" target="_blank"><i class="fab fa-vk"></i></a></li>
-                                              <li><a href="#" target="_blank"><i class="fab fa-whatsapp"></i></a></li>
-                                          </ul>
+                                          <span><?= _autoT('invited_socials_banner_sort'); ?>: </span>
+                                          <?= do_shortcode('[pacmec-ul-no-list-style-one-level-social-icons target="_blank" class="no-list-style" menu_slug="socials"][/pacmec-ul-no-list-style-one-level-social-icons]'); ?>
                                       </div>
                                   </div>
                               </div>
                           </div>
-                          <!-- footer-widget end-->
-                          <!-- footer-widget-->
+
+                          <?php if(infosite('enable_recents_blogs') == true): ?>
                           <div class="col-md-4">
                               <div class="footer-widget fl-wrap">
                                   <h3>Our Last News</h3>
@@ -95,17 +99,19 @@
                                   </div>
                               </div>
                           </div>
-                          <!-- footer-widget end-->
-                          <!-- footer-widget  -->
+                          <?php endif; ?>
+
+                          <?php if(infosite('socials_twitter_widget') == true): ?>
                           <div class="col-md-4">
                               <div class="footer-widget fl-wrap ">
-                                  <h3>Our  Twitter</h3>
+                                  <h3><?= _autoT('our_twitter'); ?></h3>
                                   <div class="twitter-holder fl-wrap scrollbar-inner2" data-simplebar data-simplebar-auto-hide="false">
                                       <div id="footer-twiit"></div>
                                   </div>
-                                  <a href="#" class="footer-link twitter-link" target="_blank">Follow us <i class="fal fa-long-arrow-right"></i></a>
+                                  <a href="<?= "https://twitter.com/".infosite('socials_twitter_u'); ?>" class="footer-link twitter-link" target="_blank"><?= _autoT('follow_us'); ?> <i class="fal fa-long-arrow-right"></i></a>
                               </div>
                           </div>
+                          <?php endif; ?>
                           <!-- footer-widget end-->
                       </div>
                   </div>
@@ -123,10 +129,6 @@
               <div class="sub-footer  fl-wrap">
                   <div class="container">
                       <div class="copyright"> &#169; Townhub 2019 .  All rights reserved.</div>
-
-
-
-
                       <?php if(!empty($GLOBALS['PACMEC']['glossary'])): ?>
                     	<div class="lang-wrap">
                     		<div class="show-lang">
@@ -146,11 +148,14 @@
                     	<?php endif; ?>
 
                       <div class="subfooter-nav">
+                        <?= do_shortcode('[pacmec-ul-no-list-style-one-level-social-icons enable_tag="true" target="_blank" class="no-list-style" menu_slug="footer"][/pacmec-ul-no-list-style-one-level-social-icons]'); ?>
+                        <!--//
                           <ul class="no-list-style">
                               <li><a href="#">Terms of use</a></li>
                               <li><a href="#">Privacy Policy</a></li>
                               <li><a href="#">Blog</a></li>
                           </ul>
+                        -->
                       </div>
                   </div>
               </div>

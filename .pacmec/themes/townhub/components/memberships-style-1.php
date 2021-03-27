@@ -73,7 +73,7 @@
     									<div class="geodir-category-content-title fl-wrap">
     										<div class="geodir-category-content-title-item">
     											<h3 class="title-sin_map">
-    												<a href="<?= $url; ?>"><?= _autoT('membership_'.$membership->id); ?></a>
+    												<a href="<?= $url; ?>"><?= _autoT('membership')." "._autoT('membership_'.$membership->id); ?></a>
                             <?php if($membership->favorite==1) echo "<span class=\"verified-badge\"><i class=\"fal fa-heart\"></i></span>"; ?>
     											</h3>
     										</div>
@@ -85,7 +85,7 @@
                           <?php if(count($membership->benefits_in)>0){ ?>
       											<ul class="no-list-style">
                               <?php foreach ($membership->benefits_in as $include): ?>
-        												<li class="tolt2" data-tippy-content="<?= _autoT('benefit_'.$include->id); ?>">
+        												<li class="tolt2" data-tippy-content="<?= _autoT('location_feature_'.$include->feature->id); ?>">
         													<i class="<?= $include->feature->icon; ?>"></i>
         												</li>
                               <?php endforeach; ?>
@@ -99,7 +99,7 @@
                           <?php if(count($membership->discounts_in)>0){ ?>
       											<ul class="no-list-style">
                               <?php foreach ($membership->discounts_in as $include): ?>
-        												<li class="tolt2" data-tippy-content="<?= _autoT('benefit_'.$include->id); ?>">
+        												<li class="tolt2" data-tippy-content="<?= _autoT('location_feature_'.$include->feature->id); ?>">
         													<i class="<?= $include->feature->icon; ?>"></i>
         												</li>
                               <?php endforeach; ?>

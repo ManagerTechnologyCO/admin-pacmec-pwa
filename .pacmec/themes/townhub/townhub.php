@@ -36,7 +36,7 @@ function component_hero_section($atts, $content='') {
   $args = shortcode_atts_global($atts);
   get_template_part('components/hero-section', $args);
 }
-add_shortcode('hero-section', 'component_hero_section');
+add_shortcode('townhub-hero-section', 'component_hero_section');
 
 function component_memberships1($atts, $content='') {
   $args = shortcode_atts([
@@ -66,26 +66,26 @@ function component_memberships1($atts, $content='') {
     get_template_part('components/memberships-style-1', $data);
   }
 }
-add_shortcode('memberships-style-1', 'component_memberships1');
+add_shortcode('townhub-memberships-style-1', 'component_memberships1');
 
 function component_video_section($atts, $content='') {
   $args = shortcode_atts_global($atts);
   get_template_part('components/video-section', $args);
 }
-add_shortcode('video-section', 'component_video_section');
+add_shortcode('townhub-video-section', 'component_video_section');
 
 function component_block_icons($atts, $content='') {
   $args = shortcode_atts_global($atts);
   $args['steps'] = @json_decode(@base64_decode($args['steps']));
   get_template_part('components/block-icons', $args);
 }
-add_shortcode('block-icons', 'component_block_icons');
+add_shortcode('townhub-block-icons', 'component_block_icons');
 
 function component_block_app($atts, $content='') {
   $args = shortcode_atts_global($atts);
   get_template_part('components/block-app', $args);
 }
-add_shortcode('block-app', 'component_block_app');
+add_shortcode('townhub-block-app', 'component_block_app');
 
 function component_block_counters($atts, $content='') {
   $args = shortcode_atts_global($atts);
@@ -101,7 +101,7 @@ function component_block_counters($atts, $content='') {
   $args['records'] = $records;
   get_template_part('components/block-counters', $args);
 }
-add_shortcode('block-counters', 'component_block_counters');
+add_shortcode('townhub-block-counters', 'component_block_counters');
 
 function component_testimonilas_carousel($atts, $content='') {
   $args = shortcode_atts_global($atts);
@@ -110,16 +110,59 @@ function component_testimonilas_carousel($atts, $content='') {
   $args['records'] = is_array($records) ? $records : [];
   get_template_part('components/testimonilas-carousel', $args);
 }
-add_shortcode('testimonilas-carousel', 'component_testimonilas_carousel');
+add_shortcode('townhub-testimonilas-carousel', 'component_testimonilas_carousel');
 
 function component_section_simple($atts, $content='') {
   $args = shortcode_atts_global($atts);
   get_template_part('components/section-simple', $args);
 }
-add_shortcode('section-simple', 'component_section_simple');
+add_shortcode('townhub-section-simple', 'component_section_simple');
 
 function component_block_contactus($atts, $content='') {
   $args = shortcode_atts_global($atts);
   get_template_part('components/block-contactus', $args);
 }
-add_shortcode('block-contactus', 'component_block_contactus');
+add_shortcode('townhub-block-contactus', 'component_block_contactus');
+
+function component_me_membership($atts, $content='') {
+  $args = shortcode_atts_global($atts);
+  $membership_id = (isset($_SESSION['membership']->id) && $_SESSION['membership']->id>0) ? $_SESSION['membership']->membership->id : 0;
+  do_shortcode("[townhub-memberships-style-1 membership_id=\"{$membership_id}\"][/townhub-memberships-style-1]");
+}
+add_shortcode('townhub-me-membership', 'component_me_membership');
+
+function component_me_profile_editor($atts, $content='') {
+  $args = shortcode_atts_global($atts);
+  get_template_part('components/me-profile-editor', $args);
+}
+add_shortcode('townhub-me-profile-editor', 'component_me_profile_editor');
+
+function component_me_change_pass($atts, $content='') {
+  $args = shortcode_atts_global($atts);
+  get_template_part('components/me-change-pass', $args);
+}
+add_shortcode('townhub-me-change-pass', 'component_me_change_pass');
+
+function component_me_wallets($atts, $content='') {
+  $args = shortcode_atts_global($atts);
+  get_template_part('components/me-wallets', $args);
+}
+add_shortcode('townhub-me-wallets', 'component_me_wallets');
+
+function component_me_beneficiaries($atts, $content='') {
+  $args = shortcode_atts_global($atts);
+  get_template_part('components/me-beneficiaries', $args);
+}
+add_shortcode('townhub-me-beneficiaries', 'component_me_beneficiaries');
+
+function component_me_payment($atts, $content='') {
+  $args = shortcode_atts_global($atts);
+  get_template_part('components/me-payment', $args);
+}
+add_shortcode('townhub-me-payment', 'component_me_payment');
+
+function component_me_add_payment($atts, $content='') {
+  $args = shortcode_atts_global($atts);
+  get_template_part('components/me-add-payment', $args);
+}
+add_shortcode('townhub-me-add-payment', 'component_me_add_payment');

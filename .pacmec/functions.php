@@ -151,12 +151,10 @@ function pacmec_init_options()
     $i = 0;
     foreach ($GLOBALS['PACMEC']['detect']['langs'] AS $lang => $score) {
       if($i == 0){
-        if($GLOBALS['PACMEC']['glossary'][$lang]){
+        if(isset($GLOBALS['PACMEC']['glossary'][$lang])){
           $GLOBALS['PACMEC']['lang'] = $lang;
+          break;
         }
-        break;
-      } else {
-        break;
       }
     }
   } else {
@@ -167,6 +165,57 @@ function pacmec_init_options()
 	foreach($GLOBALS['PACMEC']['DB']->FetchAllObject("SELECT * FROM {$GLOBALS['PACMEC']['DB']->getPrefix()}glossary_txt WHERE `glossary_id` IN (?) ", [$GLOBALS['PACMEC']['glossary'][$GLOBALS['PACMEC']['lang']]['id']]) as $option){
 		$GLOBALS['PACMEC']['glossary_txt'][$option->slug] = $option->text;
 	};
+
+  if(infosite('socials_twitter_widget') == true){
+    $user = infosite('socials_twitter_u');
+    if(!empty($user) && $user !== 'NaN'){
+      add_action('head-scripts', function() use ($user) {
+        echo '
+        window.addEventListener("load", function(){
+          if (Þ("#footer-twiit").length > 0) {
+              var config1 = {
+                  "profile": {
+                      "screenName": "'.$user.'"
+                  },
+                  "domId": "footer-twiit",
+                  "maxTweets": 4,
+                  "enableLinks": true,
+                  "showImages": false
+              };
+              twitterFetcher.fetch(config1);
+          }
+        })
+        ';
+      });
+    }
+  }
+
+  if(infosite('ajaxChimp_enabled')==true && infosite('ajaxChimp_element') !== "NaN"){
+    add_action('footer-scripts', function() {
+      echo '
+      $("'.infosite('ajaxChimp_element').'").ajaxChimp({
+          language: "'.$GLOBALS['PACMEC']['lang'].'",
+          url: "'.infosite('ajaxChimp_url').'"
+      });';
+    });
+  }
+
+  if(infosite("wco_mode") !== "NaN"){
+    define("WCO_MODE", infosite('wco_mode'));
+    define("WCO_VERS", infosite('wco_version'));
+    define("WCO_KEY_PUB", WCO_MODE !== 'production' ? infosite('wco_pub_test') : infosite('wco_pub_production'));
+    define("WCO_KEY_PRV", WCO_MODE !== 'production' ? infosite('wco_prv_test') : infosite('wco_prv_production'));
+  }
+  /*
+  $.ajaxChimp.translations.eng = {
+      submit: "Submitting...",
+      0: '<i class="fa fa-check"></i> We will be in touch soon!',
+      1: '<i class="fa fa-warning"></i> You must enter a valid e-mail address.',
+      2: '<i class="fa fa-warning"></i> E-mail address is not valid.',
+      3: '<i class="fa fa-warning"></i> E-mail address is not valid.',
+      4: '<i class="fa fa-warning"></i> E-mail address is not valid.',
+      5: '<i class="fa fa-warning"></i> E-mail address is not valid.'
+  };*/
 }
 
 function php_file_tree_dir_JSON_exts($directory, $return_link, $extensions = array(), $first_call = true, $step=0, $limit=1)
@@ -326,11 +375,8 @@ function pacmec_init_plugins_actives()
         ]
       ],
     ]);
-    /*
-    $GLOBALS['PACMEC']['alerts'][] =;*/
-    // exit;
   }
-	// echo "\t--- plugins validados ---\n";
+	do_action("init");
 }
 
 function current_url()
@@ -581,9 +627,41 @@ function pacmec_assets_globals()
   add_style_head(siteinfo('siteurl')   . "/.pacmec/system/assets/css/pacmec.css",  ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8"], 1, false);
   add_style_head(siteinfo('siteurl')   . "/.pacmec/system/assets/css/plugins.css", ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8"], 0.99, false);
   add_scripts_head(siteinfo('siteurl') . "/.pacmec/system/assets/js/plugins.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 1, false);
-  add_scripts_foot(siteinfo('siteurl') . "/.pacmec/system/assets/js/sdk.js"."?&cache=".rand(),   ["type"=>"text/javascript", "charset"=>"UTF-8"], 0, false);
+
+  add_scripts_head(siteinfo('siteurl') . "/.pacmec/system/dist/bootbox/bootbox.all.min.js",    ["type"=>"text/javascript", "charset"=>"UTF-8"], 0, false);
+  add_scripts_head(siteinfo('siteurl') . "/.pacmec/system/dist/bootbox/bootbox.locales.min.js",    ["type"=>"text/javascript", "charset"=>"UTF-8"], 0, false);
+  add_scripts_head(siteinfo('siteurl') . "/.pacmec/system/dist/sweetalert2/sweetalert2.all.min.js",    ["type"=>"text/javascript", "charset"=>"UTF-8"], 0, false);
+  add_scripts_head(siteinfo('siteurl') . "/.pacmec/system/dist/vue/vue.min.js",    ["type"=>"text/javascript", "charset"=>"UTF-8"], 0, false);
+  add_scripts_head(siteinfo('siteurl') . "/.pacmec/system/dist/vue/vue-router.js",    ["type"=>"text/javascript", "charset"=>"UTF-8"], 0, false);
+
+  add_scripts_head(siteinfo('siteurl') . "/.pacmec/system/assets/js/sdk.js"."?&cache=".rand(),   ["type"=>"text/javascript", "charset"=>"UTF-8"], 0, false);
 
   if(siteinfo('enable_pwa') == true) add_scripts_foot(siteinfo('siteurl') . "/.pacmec/system/assets/js/main.js",   ["type"=>"text/javascript", "charset"=>"UTF-8"], 0, false);
+}
+
+// FUNCIONES PARA EL CONTROLADOR FRONTAL
+function cargarControlador($controller){
+  $controlador = ucwords($controller).'Controller';
+  $strFileController = PACMEC_PATH . 'controllers/'.$controlador.'.php';
+  if(!is_file($strFileController)){ $strFileController = PACMEC_PATH . 'controllers/PacmecController.php'; }
+  require_once $strFileController;
+  $controllerObj = new $controlador();
+  return $controllerObj;
+}
+
+function cargarAccion($controllerObj,$action){
+  $accion = $action;
+  $controllerObj->$accion();
+}
+
+function lanzarAccion($controllerObj){
+  $data = array_merge($_GET, $_POST);
+  if (isset($data["action"]) && method_exists($controllerObj, $data["action"])){
+    cargarAccion($controllerObj, $data["action"]);
+  }
+	else {
+    cargarAccion($controllerObj, "index");
+  }
 }
 
 function pacmec_run_ui()
@@ -596,7 +674,23 @@ function pacmec_run_ui()
     && file_exists($GLOBALS['PACMEC']['theme']['dir'] . '/index.php')
   )
   {
-    require_once $GLOBALS['PACMEC']['theme']['dir'] . '/index.php';
+    $raw_json = retrieveJsonPostData();
+    $raw = [];
+    if(is_object($raw_json)){
+      foreach ($raw_json as $key => $value) {
+        $_POST[$key] = $value;
+      }
+      $data = array_merge($_GET, $_POST);
+    }
+    if(isset($data['controller']))
+    {
+      $controllerObj = cargarControlador($data["controller"]);
+      lanzarAccion($controllerObj);
+    }
+    else
+    {
+      require_once $GLOBALS['PACMEC']['theme']['dir'] . '/index.php';
+    }
   } else {
     echo "Hubo un problema al ejecutar la Interfas de Usuario. {$GLOBALS['PACMEC']['theme']['text_domain']} -> index.php]";
     exit;
@@ -700,13 +794,31 @@ function pacmec_head()
 {
   stable_usort($GLOBALS['PACMEC']['website']['styles']['head'], 'pacmec_ordering_by_object_asc');
   stable_usort($GLOBALS['PACMEC']['website']['scripts']['head'], 'pacmec_ordering_by_object_asc');
-  $a = "";
-	foreach($GLOBALS['PACMEC']['website']['styles']['head'] as $file){ $a .= \PHPStrap\Util\Html::tag($file['tag'], "", [], $file['attrs'], true)."\t"; }
-  $a .= \PHPStrap\Util\Html::tag('style', do_action( "head-styles" ), [], ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8"], false) . "\t";
-	foreach($GLOBALS['PACMEC']['website']['scripts']['head'] as $file){ $a .= \PHPStrap\Util\Html::tag($file['tag'], "", [], $file['attrs'], false)."\t"; }
-  $a .= \PHPStrap\Util\Html::tag('script', do_action( "head-scripts" ), [], ["type"=>"text/javascript", "charset"=>"UTF-8"], false);
-  echo "{$a}";
   do_action( "head" );
+  $a = "";
+  foreach($GLOBALS['PACMEC']['website']['styles']['head'] as $file){ $a .= \PHPStrap\Util\Html::tag($file['tag'], "", [], $file['attrs'], true)."\t"; }
+  $a .= \PHPStrap\Util\Html::tag('style', do_action( "head-styles" ), [], ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8"], false) . "\t";
+  foreach($GLOBALS['PACMEC']['website']['scripts']['head'] as $file){ $a .= \PHPStrap\Util\Html::tag($file['tag'], "", [], $file['attrs'], false)."\t"; }
+  echo "<script type=\"text/javascript\">";
+  echo '
+    var WCO = {
+			pub: "' . (infosite('wco_mode') == 'production' ? infosite('wco_pub_prod') : infosite('wco_pub_test') ) .  '",
+		};
+    window.mtAsyncInit = function(){
+      PACMEC.init({
+        api_server : location.protocol + "//" + location.host,
+        appId      : "clubcampestreparaisosol",
+        token      : "pacmec",
+        Wmode      : "'.infosite('wco_mode').'",
+        Wversion   : "v1",
+      });
+    }
+  ';
+  echo "</script>";
+  echo "{$a}";
+  echo "<script type=\"text/javascript\">";
+  do_action( "head-scripts" );
+  echo "</script>";
   echo "\n";
 	return true;
 }
@@ -719,8 +831,11 @@ function pacmec_foot()
 	foreach($GLOBALS['PACMEC']['website']['styles']['foot'] as $file){ $a .= \PHPStrap\Util\Html::tag($file['tag'], "", [], $file['attrs'], true)."\t"; }
   $a .= \PHPStrap\Util\Html::tag('style', do_action( "footer-styles" ), [], ["rel"=>"stylesheet", "type"=>"text/css", "charset"=>"UTF-8"], false) . "\t";
 	foreach($GLOBALS['PACMEC']['website']['scripts']['foot'] as $file){ $a .= \PHPStrap\Util\Html::tag($file['tag'], "", [], $file['attrs'], false)."\t"; }
-  $a .= \PHPStrap\Util\Html::tag('script', do_action( "footer-scripts" ), [], ["type"=>"text/javascript", "charset"=>"UTF-8"], false);
+  // $a .= \PHPStrap\Util\Html::tag('script', do_action( "footer-scripts" ), [], ["type"=>"text/javascript", "charset"=>"UTF-8"], false);
   echo "{$a}";
+  echo "<script type=\"text/javascript\">";
+  do_action( "footer-scripts" );
+  echo "</script>";
   do_action( "footer" );
   echo "\n";
   if(MODE_DEBUG == true) require_once PACMEC_PATH . '.debug/footer.php';
@@ -808,7 +923,6 @@ function shortcode_atts_global($atts, $shortcode = '') : array {
     "glossary" => null,
     "lang_labels" => null,
     "me" => null,
-    "membership" => null,
     "wallets" => null,
     "wallets_balance" => null,
     "beneficiaries" => null,
@@ -855,6 +969,7 @@ function shortcode_atts_global($atts, $shortcode = '') : array {
   $repair = array_merge($repair, [
     "request_uri" => current_url(),
     "lang" => $GLOBALS['PACMEC']['lang'],
+    "membership" => meMembership(),
   ]);
   return $repair;
 }
@@ -969,7 +1084,6 @@ function add_filter(string $tag, $function_to_add, int $priority = 50, string $i
   return $GLOBALS['PACMEC']['hooks']->add_filter($tag, $function_to_add, $priority, $include_path);
 }
 
-
 /**
 *
 * Traduccion automatica
@@ -982,9 +1096,21 @@ function add_filter(string $tag, $function_to_add, int $priority = 50, string $i
 function pacmec_translate_label($label, $lang=null) : string
 {
   if(isset($GLOBALS['PACMEC']['glossary_txt'][$label])) return $GLOBALS['PACMEC']['glossary_txt'][$label];
-  return "Þ{{ $label }}";
+  $glossary_id = $GLOBALS['PACMEC']['glossary'][$GLOBALS['PACMEC']["lang"]]['id'];
+  $slug = $label;
+  $text = "þ{{$label}}";
+  try {
+    $sql_ins = "INSERT INTO `{$GLOBALS['PACMEC']['DB']->getPrefix()}glossary_txt` (`glossary_id`, `slug`, `text`) SELECT * FROM (SELECT {$glossary_id},'{$slug}','{$text}') AS tmp WHERE NOT EXISTS (SELECT `id` FROM `{$GLOBALS['PACMEC']['DB']->getPrefix()}glossary_txt` WHERE `glossary_id` = '{$glossary_id}' AND `slug` = '{$slug}') LIMIT 1";
+    $insert = $GLOBALS['PACMEC']['DB']->FetchObject($sql_ins, []);
+    if($insert>0){
+      return "þ{ $label }";
+    }
+    return "þE{ $label }";
+  } catch (\Exception $e) {
+    return "Þ{ $label }";
+  }
+  return "Þ{ $label }";
 }
-
 
 function pacmec_load_menu($menu_slug="")
 {
@@ -1078,38 +1204,47 @@ function me($key)
 }
 
 /*
-crear shortcode
+ * filtering an array
+ */
+function filter_by_value ($array, $index, $value){
+	if(is_array($array) && count($array)>0)
+	{
+		foreach(array_keys($array) as $key){
+			$temp[$key] = $array[$key][$index];
 
-add_shortcode('component', FUNCTION => recibe attrs globales beta y estos que se puedan extender desde temas o plugins
-
-
-
-
-function cargarControlador($controller){
- $controlador = ucwords($controller).'Controller';
- $strFileController = CORE_PATH . '/controller/'.$controlador.'.php';
- if(!is_file($strFileController)){ $strFileController = CORE_PATH . '/controller/'.ucwords(CONTROLADOR_DEFECTO).'Controller.php'; }
- require_once $strFileController;
- $controllerObj = new $controlador();
- return $controllerObj;
+			if ($temp[$key] == $value){
+				$newarray[$key] = $array[$key];
+			}
+		}
+	  }
+  return $newarray;
 }
 
-function cargarAccion($controllerObj,$action){
- $accion = $action;
- $controllerObj->$accion();
+/*
+ * filtering and count an array
+ */
+function filter_by_value_counter($array, $index){
+	$array = is_array($array) ? $array : (array) $array;
+	if(is_array($array) && count($array)>0)
+	{
+		foreach($array as $key=>$temp){
+			// $temp[$key] = $array[$key][$index];
+			// $newarray[$key] = count($array[$key][$index]);
+			$newarray[$key] = count($temp->{$index});
+		}
+	  }
+  return $newarray;
 }
 
-function lanzarAccion($controllerObj){
- #if (strtoupper($_SERVER['REQUEST_METHOD']) == 'GET' && isset($_GET["action"]) && method_exists($controllerObj, $_GET["action"])){
- if (isset($_GET["action"]) && method_exists($controllerObj, $_GET["action"])){
-   cargarAccion($controllerObj, $_GET["action"]);
- }
- else if (strtoupper($_SERVER['REQUEST_METHOD']) == 'POST' && isset($_POST["action"]) && method_exists($controllerObj, $_POST["action"])){
-   cargarAccion($controllerObj, $_POST["action"]);
- }
-	else {
-   cargarAccion($controllerObj, ACCION_DEFECTO);
- }
+function randString($length) {
+  $char = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  $char = @str_shuffle($char);
+  for($i = 0, $rand = '', $l = @strlen($char) - 1; $i < $length; $i ++) {
+      $rand .= $char[@mt_rand(0, $l)];
+  }
+  return $rand;
 }
 
-*/
+
+
+/*** FUNAL ***/

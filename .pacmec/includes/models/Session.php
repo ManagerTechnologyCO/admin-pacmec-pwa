@@ -17,6 +17,8 @@ Class Session
 {
 	#public  $isGuest          = true;
 	public  $user               = null;
+	public  $payment            = null;
+	public  $payments           = [];
 	public  $permission_group   = null;
 	public  $permissions_items  = [];
 	public  $permissions        = [];
@@ -25,15 +27,16 @@ Class Session
 	/**
 	* Inicializa la sesión
 	*/
-	public function __construct(){
+	public function __construct()
+	{
 		if ( $this->is_session_started() === FALSE ) @session_start();
 		$this->user             = new \stdClass();
 		$this->permission_group = new \stdClass();
 		$this->refreshSession();
 	}
 
-	public function add_alert(string $message, string $title=null, string $url=null, int $time=null, string $uniqid=null, string $icon=null
-	){
+	public function add_alert(string $message, string $title=null, string $url=null, int $time=null, string $uniqid=null, string $icon=null)
+	{
 		$time = $time==null ? time() : $time;
 		$uniqid = $uniqid==null ? uniqid() : $uniqid;
 		$icon = $icon==null ? "fas fa-bell" : $icon;
@@ -57,7 +60,8 @@ Class Session
 		};
 	}
 
-	public function add_permission(string $tag, $obj=null):bool{
+	public function add_permission(string $tag, $obj=null):bool
+	{
 		$tag = strtolower($tag);
 		if($obj !== null){
 			$obj = (object) $obj;
@@ -76,7 +80,8 @@ Class Session
 		return true;
 	}
 
-	public function set($k, $v, $l=null) {
+	public function set($k, $v, $l=null)
+	{
 		if($l == null){
 			$this->{$k} = $_SESSION[$k] = $v;
 		} else {
@@ -88,7 +93,8 @@ Class Session
 		}
 	}
 
-	public function is_session_started(){
+	public function is_session_started()
+	{
 		if ( php_sapi_name() !== 'cli' ) {
 			if ( version_compare(phpversion(), '5.4.0', '>=') ) { return session_status() === PHP_SESSION_ACTIVE ? TRUE : FALSE; }
 			else { return session_id() === '' ? FALSE : TRUE; }
@@ -96,7 +102,8 @@ Class Session
 		return FALSE;
 	}
 
-	public function refreshSession(){
+	public function refreshSession()
+	{
 		if(isUser()){
 			try {
 				if(isset($_SESSION['user'])){
@@ -110,7 +117,8 @@ Class Session
 		}
 	}
 
-	public function setAll($session = []){
+	public function setAll($session = [])
+	{
 		$session = (array) $session;
 		foreach($session as $item => $valor){
 			switch($item){
@@ -127,6 +135,12 @@ Class Session
 			}
 			$this->{$item} = (($valor));
 		}
+
+		$payment = $GLOBALS['PACMEC']['DB']->FetchObject("SELECT * FROM `{$GLOBALS['PACMEC']['DB']->getPrefix()}wompi_tokens` WHERE `token_status` IN ('CREATED', 'PENDING', 'APPROVED') AND `source_status` IN ('AVAILABLE') AND `user_id` IN (?) ORDER BY `created` DESC", [$this->user->id]);
+		$this->payment = $payment!==false ? $payment : null;
+
+		$payments = $GLOBALS['PACMEC']['DB']->FetchAllObject("SELECT * FROM `{$GLOBALS['PACMEC']['DB']->getPrefix()}wompi_tokens` WHERE `user_id` IN (?)", [$this->user->id]);
+		$this->payments = $payments!==false ? $payments : [];
 
 		if(isset($this->user->permissions) && $this->user->permissions !== null && $this->user->permissions > 0 && count($this->permissions)==0){
 			try {
@@ -159,19 +173,23 @@ Class Session
 
 	}
 
-	public function isGuest(){
+	public function isGuest()
+	{
 		return isset($_SESSION['user']) && is_array($_SESSION['user']) ? false : true;
 	}
 
-	public function userId(){
+	public function userId()
+	{
 		return isset($_SESSION['user']['id']) ? $_SESSION['user']['id'] : 0;
 	}
 
-	public function getBy($key){
+	public function getBy($key)
+	{
 		return isset($_SESSION['user']) ? $this->{$key} : null;
 	}
 
-	public function getUserBy($key){
+	public function getUserBy($key)
+	{
 		#$this->refreshSession();
 		return isset($_SESSION['user']) ? $this->user->{$key} : null;
 	}
@@ -180,7 +198,8 @@ Class Session
 	* Retorna todos los valores del array de sesión
 	* @return el array de sesión completo
 	*/
-	public function getAll(){
+	public function getAll()
+	{
 		#$this->refreshSession();
 		return isset($_SESSION['user']) ? $this : [];
 	}
@@ -188,7 +207,8 @@ Class Session
 	/**
 	* Cierra la sesión eliminando los valores
 	*/
-	public function close(){
+	public function close()
+	{
 		session_unset();
 		session_destroy();
 	}
@@ -197,8 +217,10 @@ Class Session
 	* Retorna el estatus de la sesión
 	* @return string el estatus de la sesión
 	*/
-	public function getStatus(){
-		switch(session_status()){
+	public function getStatus()
+	{
+		switch(session_status())
+		{
 			case 0:
 				return "DISABLED";
 				break;
@@ -215,7 +237,8 @@ Class Session
 	* Retorna string default
 	* @return string
 	*/
-	public function __toString(){
+	public function __toString()
+	{
 		return json_encode($this->getAll());
 	}
 
@@ -223,15 +246,18 @@ Class Session
 	* Retorna array default
 	* @return string
 	*/
-	public function __sleep(){
+	public function __sleep()
+	{
 		return array_keys($this->getAll());
 	}
 
-	public function getUserId(){
+	public function getUserId()
+	{
 		return !isset($_SESSION['user']['id']) ? 0 : $_SESSION['user']['id'];
 	}
 
-	public function login($args = []){
+	public function login($args = [])
+	{
 		$args = (object) $args;
 		if(isset($args->nick) && isset($args->hash)){
 			$result = $this->validateUserDB($args->nick);
@@ -256,7 +282,8 @@ Class Session
 		}
 	}
 
-	public function validateUserDB($nick_or_email=''){
+	public function validateUserDB($nick_or_email='')
+	{
 		try {
 			$sql = "SELECT * FROM `{$this->pacmecDB->prefix}users` WHERE `username`=? AND `status` IN (1) ";
 			$sql = "SELECT * FROM `{$this->pacmecDB->prefix}users` WHERE `username`=? ";
@@ -281,6 +308,30 @@ Class Session
 		catch(Exception $e){
 			#echo $e->getMessage();
 			return "error";
+		}
+	}
+
+	public function save($info_save)
+	{
+		try {
+			$user_id = $this->getUserId();
+			$labels = [];
+			$values = [];
+			foreach ($info_save as $key => $value) {
+				$labels[] = "{$key}=?";
+				$values[] = $value;
+			}
+			$result = $GLOBALS['PACMEC']['DB']->FetchObject("UPDATE IGNORE `users` SET ".implode(',', $labels)." WHERE `id`={$user_id}", $values);
+			if($result==true) {
+				foreach ($info_save as $key => $value) {
+					$_SESSION['user'][$key] = $value;
+				}
+			};
+			return $result;
+		}
+		catch(Exception $e){
+			#echo $e->getMessage();
+			return false;
 		}
 	}
 }

@@ -50,7 +50,6 @@ $login_form->message = null;
             </div>
             <!-- // CUSTOM LOGIN -->
           </div>
-          <!-- //
             <div class="tab">
                 <div id="tab-2" class="tab-content">
                     <div class="custom-form">
@@ -76,7 +75,6 @@ $login_form->message = null;
                     </div>
                 </div>
             </div>
-          -->
         </div>
         <!--tabs end
         <div class="log-separator fl-wrap"><span>or</span></div>

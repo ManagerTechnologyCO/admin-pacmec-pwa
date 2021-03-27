@@ -66,6 +66,7 @@ else {
     	$r_message = _autoT('email_sent_error');
     }
   }
+  $_POST = array();
 };
 ?>
 <section   id="sec1" data-scrollax-parent="true">

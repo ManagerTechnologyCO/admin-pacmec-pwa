@@ -5379,7 +5379,7 @@ section.gray-section .section-separator {
 }
 .list-single-main-item-title:before , .box-widget-item-header:before {
 	font-family: Font Awesome\ 5 Pro;
-	content: "\f107";
+	/*content: "\f107";*/
 	position:absolute;
 	right:30px;
 	top:50%;

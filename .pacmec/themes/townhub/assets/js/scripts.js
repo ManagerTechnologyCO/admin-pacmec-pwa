@@ -413,10 +413,18 @@ function initTowhub() {
         e.preventDefault();
         $(".show-more-snopt-tooltip").toggleClass("show-more-snopt-tooltip_vis");
     });
+    /*
     tippy('.tolt2', {
+      content: '',
 			animation: 'scale',
 			arrow: true
 		});
+    */
+    /*
+    setTimeout(function () {
+      tippy('[title]');
+    }, 2500);
+    */
  // calc ------------------
     $("form[name=rangeCalc]").jAutoCalc("destroy");
     $("form[name=rangeCalc]").jAutoCalc({
@@ -519,19 +527,7 @@ function initTowhub() {
         var bgt = $(this).data("bgtab");
         $(".bg_tabs").css("background-image", "url(" + bgt + ")");
     });
-    // twitter ------------------
-    if ($("#footer-twiit").length > 0) {
-        var config1 = {
-            "profile": {
-                "screenName": 'envatomarket'
-            },
-            "domId": 'footer-twiit',
-            "maxTweets": 4,
-            "enableLinks": true,
-            "showImages": false
-        };
-        twitterFetcher.fetch(config1);
-    }
+
     //   Contact form------------------
     $(document).on('submit', '#contactform', function () {
         var a = $(this).attr("action");
@@ -555,20 +551,6 @@ function initTowhub() {
     $(document).on('keyup', '#contactform input, #contactform textarea', function () {
         $("#message").slideUp(1500);
     });
-    //   mailchimp------------------
-    $("#subscribe").ajaxChimp({
-        language: "eng",
-        url: "http://kwst.us18.list-manage.com/subscribe/post?u=42df802713d4826a4b137cd9e&id=815d11e811"
-    });
-    $.ajaxChimp.translations.eng = {
-        submit: "Submitting...",
-        0: '<i class="fa fa-check"></i> We will be in touch soon!',
-        1: '<i class="fa fa-warning"></i> You must enter a valid e-mail address.',
-        2: '<i class="fa fa-warning"></i> E-mail address is not valid.',
-        3: '<i class="fa fa-warning"></i> E-mail address is not valid.',
-        4: '<i class="fa fa-warning"></i> E-mail address is not valid.',
-        5: '<i class="fa fa-warning"></i> E-mail address is not valid.'
-    };
     //   Video------------------
     var v = $(".background-youtube-wrapper").data("vid");
     var f = $(".background-youtube-wrapper").data("mv");
@@ -1239,7 +1221,7 @@ function initparallax() {
         b.reload();
         b.init();
     }
-    if (trueMobile) $(".bgvid , .background-vimeo , .background-youtube-wrapper ").remove();
+    // if (trueMobile) $(".bgvid , .background-vimeo , .background-youtube-wrapper ").remove();
 }
 // duplicate -----------------
 $.fn.duplicate = function (a, b) {

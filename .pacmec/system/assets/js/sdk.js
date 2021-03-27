@@ -40,8 +40,8 @@ try {
   		if(this.divsRoot.length==0){
   			let divRoot = document.createElement("mt:root");
   			//divRoot.textContent = "ROOT MT CARGADO...";
-  			this.body.insertBefore(divRoot, this.body.firstChild);
-  			this.divsRoot = document.getElementsByTagName("mt:root");
+  			//   this.body.insertBefore(divRoot, this.body.firstChild);
+  			//   this.divsRoot = document.getElementsByTagName("mt:root");
   		}
   	}
 
