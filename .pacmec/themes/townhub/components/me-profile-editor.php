@@ -24,6 +24,7 @@ if(isset($meinfo->user) && $meinfo->user->id > 0):
     $display_name     = $_POST['display_name'];
     $email    = $_POST['email'];
     $phones = $_POST['phones'];
+    $address = $_POST['address'];
     if(trim($display_name) == '') {
     	$r_message = '<div class="error_message">'._autoT('enter_your_display_name').'</div>';
     } else if(trim($phones) == '') {
@@ -64,15 +65,19 @@ if(isset($meinfo->user) && $meinfo->user->id > 0):
 			<div class="row">
 				<div class="col-sm-12">
 					<label><?= _autoT('users_display_name'); ?> <i class="fal fa-user"></i></label>
-					<input type="text" placeholder="<?= _autoT('display_name'); ?>" name="display_name" value="<?= $me->display_name; ?>" required="" />
+					<input type="text" placeholder="<?= _autoT('users_display_name'); ?>" name="display_name" value="<?= $me->display_name; ?>" required="" />
 				</div>
 				<div class="col-sm-6">
 					<label><?= _autoT('users_email'); ?><i class="far fa-envelope"></i>  </label>
-					<input type="text" placeholder="<?= _autoT('email'); ?>" name="email" value="<?= $me->email; ?>" required="" />
+					<input type="text" placeholder="<?= _autoT('users_email'); ?>" name="email" value="<?= $me->email; ?>" required="" />
 				</div>
 				<div class="col-sm-6">
 					<label><?= _autoT('users_phones'); ?><i class="far fa-phone"></i>  </label>
-					<input type="text" placeholder="<?= _autoT('phones'); ?>" name="phones" value="<?= $me->phones; ?>" required="" />
+					<input type="text" placeholder="<?= _autoT('users_phones'); ?>" name="phones" value="<?= $me->phones; ?>" required="" />
+				</div>
+				<div class="col-sm-12">
+					<label><?= _autoT('users_address'); ?><i class="far fa-map-pin"></i>  </label>
+					<input type="text" placeholder="<?= _autoT('users_phones'); ?>" name="phones" value="<?= $me->phones; ?>" required="" />
 				</div>
 			</div>
 			<div class="clearfix"></div>

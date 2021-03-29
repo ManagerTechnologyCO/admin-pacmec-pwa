@@ -41,6 +41,7 @@ add_shortcode('townhub-hero-section', 'component_hero_section');
 function component_memberships1($atts, $content='') {
   $args = shortcode_atts([
     "limit" => 1,
+    "active_pays" => false,
     "filters_active" => false,
     "btns_explore" => false,
     "ordering" => 'created,desc',
@@ -61,6 +62,7 @@ function component_memberships1($atts, $content='') {
       "filters_active" => $args['filters_active'],
       "btns_explore" => $args['btns_explore'],
       "ordering" => $args['ordering'],
+      "active_pays" => $args['active_pays'],
       "memberships" => $GLOBALS['PACMEC']['memberships']['allow_signups'],
     ];
     get_template_part('components/memberships-style-1', $data);
@@ -126,8 +128,12 @@ add_shortcode('townhub-block-contactus', 'component_block_contactus');
 
 function component_me_membership($atts, $content='') {
   $args = shortcode_atts_global($atts);
-  $membership_id = (isset($_SESSION['membership']->id) && $_SESSION['membership']->id>0) ? $_SESSION['membership']->membership->id : 0;
-  do_shortcode("[townhub-memberships-style-1 membership_id=\"{$membership_id}\"][/townhub-memberships-style-1]");
+  if(meMembership()){
+    $membership_id = (isset($_SESSION['membership']->id) && $_SESSION['membership']->id>0) ? $_SESSION['membership']->membership->id : 0;
+    do_shortcode("[townhub-memberships-style-1 membership_id=\"{$membership_id}\"][/townhub-memberships-style-1]");
+  } else {
+    do_shortcode("[townhub-memberships-style-1 active_pays=\"true\" limit=\"12\"][/townhub-memberships-style-1]");
+  }
 }
 add_shortcode('townhub-me-membership', 'component_me_membership');
 
@@ -166,3 +172,22 @@ function component_me_add_payment($atts, $content='') {
   get_template_part('components/me-add-payment', $args);
 }
 add_shortcode('townhub-me-add-payment', 'component_me_add_payment');
+
+function component_me_history_recharges($atts, $content='') {
+  $args = shortcode_atts_global($atts);
+  get_template_part('components/me-history-recharges', $args);
+}
+add_shortcode('townhub-me-history-recharges', 'component_me_history_recharges');
+
+function component_me_history_affiliates($atts, $content='') {
+  $args = shortcode_atts_global($atts);
+  get_template_part('components/me-history-affiliates', $args);
+}
+add_shortcode('townhub-me-history-affiliates', 'component_me_history_affiliates');
+
+function component_pricing_table($atts, $content='') {
+  $args = shortcode_atts_global($atts);
+  $args['steps'] = @json_decode(@base64_decode($args['steps']));
+  get_template_part('components/pricing-table', $args);
+}
+add_shortcode('townhub-pricing-table', 'component_pricing_table');

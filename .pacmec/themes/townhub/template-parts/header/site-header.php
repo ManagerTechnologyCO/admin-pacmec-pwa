@@ -59,7 +59,7 @@
 		<div class="header-modal-container scrollbar-inner fl-wrap" data-simplebar>
 			<div class="widget-posts  fl-wrap">
       <?php
-/*
+			/*
       if($notifications !== null): ?>
 				<ul class="no-list-style">
 					<li v-for="(notification, notification_i) in notifications" :id="'notification-gen-'+notification.id">

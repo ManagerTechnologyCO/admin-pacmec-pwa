@@ -27,6 +27,20 @@ class Memberships extends ModeloBase
 		return ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 	}
 
+	public function load_signup_plan($id){
+		try {
+			$sql = "Select * FROM `{$this->getPrefix()}memberships` WHERE `allow_signups` IN (1) AND `id` IN (?)";
+			$result = $this->FetchObject($sql, [$id]);
+			if($result !== false){
+				$this->setAll($result);
+			}
+			return $this;
+		}
+		catch(\Exception $e){
+			return [];
+		}
+	}
+
 	public function load_signups_plans(){
 		try {
 			$sql = "Select * FROM `{$this->getPrefix()}memberships` WHERE `allow_signups` IN (1)";
@@ -365,32 +379,24 @@ class Memberships extends ModeloBase
 
 	public function load_benefits_and_expenses($search=0, $me_membership=null){
 		try {
-			$sql = "Select * FROM `{$this->getPrefix()}benefits` WHERE `membership` IN (?) ";
-			$result = $this->FetchAllObject($sql, [$search]);
+			$result = $this->FetchAllObject("Select * FROM `{$this->getPrefix()}benefits` WHERE `membership` IN (?) ", [$search]);
 			$result = $result !== false ? $result : [];
 			$r = [];
 			foreach($result as $a){
+				$feature_id = $a->feature;
 				$a->feature = $this->load_feature_by('id', $a->feature);
 				// $a->expenses = $this->load_expenses_m_and_f($a, $a->feature->id);
-				$a->available = [];
+				//$a->available = [];
 				$a->available_day = $a->limit_day;
 				$a->available_week = $a->limit_week;
 				$a->available_month = $a->limit_month;
 				$a->available_year = $a->limit_year;
 				$a->expenses_sql = "";
 				$a->expenses = [];
-				if($me_membership!==null){
-					//$a->expenses = $this->load_expenses_m_and_f($me_membership, $a->feature->id);
-					/*
-					if(count($a->expenses)>0){
 
-						echo json_encode($a->expenses);
-						exit;
-					}*/
-				}
 				if($a->limit_cycle !== null){
 					$sql_parts = [];
-					$slug_add_sql = "`membership` IN ('{$me_membership}') AND `feature` IN ('{$a->id}') "; // AND `type` IN ('spend')
+					$slug_add_sql = "`membership` IN ('{$me_membership}') AND `benefit` IN ('{$a->id}') "; // AND `type` IN ('spend')
 					foreach(explode(',', $a->limit_cycle) as $cycle){
 						$a->expenses[$cycle] = [];
 						switch($cycle){
@@ -404,15 +410,20 @@ class Memberships extends ModeloBase
 							case "Month":
 								$sql_parts[] = "({$slug_add_sql} AND MONTH(`created`) = MONTH(CURRENT_DATE()) AND YEAR(`created`) = YEAR(CURRENT_DATE())) ";
 								break;
+							case "Year":
+								$sql_parts[] = "({$slug_add_sql} AND YEAR(`created`) = YEAR(CURRENT_DATE()) AND YEAR(`created`) = YEAR(CURRENT_DATE())) ";
+								break;
 							default:
 								break;
 						}
 					}
+
 					if(count($sql_parts) > 0){
 						$sql_t = "SELECT * FROM `expenses` ";
 						for($i=0;$i<count($sql_parts);$i++){ if($i==0){ $sql_t .= " WHERE {$sql_parts[$i]}"; } else { $sql_t .= " OR {$sql_parts[$i]}"; } }
 						$result_expenses = $this->FetchAllObject($sql_t, []);
 						$a->expenses_sql = $sql_t;
+						$r[] = $sql_t;
 						$result_expenses = $result_expenses !== false ? $result_expenses : [];
 						foreach($result_expenses as $expense){
 							foreach(explode(',', $a->limit_cycle) as $cycle){
@@ -427,12 +438,19 @@ class Memberships extends ModeloBase
 									case "Month":
 										if(date('n', $date_time) == date('n')){ $a->expenses[$cycle][] = $expense; }
 										break;
+									case "Year":
+										if(date('o', $date_time) == date('o')){ $a->expenses[$cycle][] = $expense; }
+										break;
 									default:
 										break;
 								}
 							}
 						}
 					}
+
+					// echo json_encode($a);
+					// exit;
+
 					foreach(explode(',', $a->limit_cycle) as $cycle){
 						// $total = $limit_total = $a->{"limit_".strtolower($cycle)};
 						foreach($a->expenses[$cycle] as $expense){
@@ -445,6 +463,7 @@ class Memberships extends ModeloBase
 					}
 				}
 			}
+			// echo json_encode($r);
 			return $result;
 		}
 		catch(\Exception $e){

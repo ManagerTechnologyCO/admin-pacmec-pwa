@@ -35,11 +35,23 @@ function isMember(){
   return (isset($_SESSION['membership']->id) && $_SESSION['membership']->id>0) ? true : false;
 }
 
+function meAffiliationId(){
+  return (isset($_SESSION['membership']->id) && $_SESSION['membership']->id>0) ? $_SESSION['membership']->id : 0;
+}
+
+function isStaff(){
+	if(isAdmin()) return true;
+	return isUser() && (int) $_SESSION['membership']->is_staff === 1 ? true : false;
+}
+
 function meMembership(){
   return (isset($_SESSION['membership']->id) && $_SESSION['membership']->id>0) ? $_SESSION['membership'] : null;
 }
 
 if(isset($_REQUEST['cmrfid']) && $_REQUEST['cmrfid'] == 'functions' && isset($_REQUEST['action'])){
+	if(!isStaff()){
+	  header("Location: ".infosite('siteurl').infosite('homeurl'));
+	}
 	$session = meinfo();
 	header('Content-Type: application/json');
 	if(isset($session->user->id) && $session->user->id > 0){
@@ -78,25 +90,25 @@ if(isset($_REQUEST['cmrfid']) && $_REQUEST['cmrfid'] == 'functions' && isset($_R
 								$r_from = $wallet_from->subtract_balance((float) $_REQUEST['amount']);
 								$r_to = $wallet_to->add_balance((float) $_REQUEST['amount']);
 								if($r_from == true && $r_to == true){
-									$result->message = "Transaccion éxitosa!.";
+									$result->message = _autoT("exchange_success");
 									$result->error = false;
 								} else {
-									$result->message = "Ocurrio un problema en la transaccion confirma tu saldo antes de intentar nuevamente.";
+									$result->message = _autoT('exchange_fail');
 								}
 							} else {
-								$result->message = "El monedero de destino no existe. " . json_encode($wallet_to);
+								$result->message = _autoT('exchange_fail_to_fail');
 							}
 						} else {
-							$result->message = "Saldo insuficiente para realizar la transaccion.";
+							$result->message = _autoT('exchange_fail_to_balance');
 						}
 					} else {
-						$result->message = "Monedero de origen no encontrado.";
+						$result->message = _autoT("exchange_fail_to_no_exist");
 					}
 				} else {
-					$result->message = "No puedes transferir al mismo monedero, intenta nuevamente.";
+					$result->message = _autoT("exchange_fail_to_origin");
 				}
 			} else {
-				$result->message = "Datos incompletos.";
+				$result->message = _autoT("request_invalid");
 			}
 			exit(json_encode($result));
 		}
@@ -112,20 +124,20 @@ if(isset($_REQUEST['cmrfid']) && $_REQUEST['cmrfid'] == 'functions' && isset($_R
 					if ($wallet_from->status == 'active') {
 						$locked = $wallet_from->locked();
 						$result->error = !$locked;
-						$result->message = $locked==true?"Monedero bloqueado":"Error al tratar de bloquear el monedero.";
+						$result->message = $locked==true?_autoT('wallet_locked_success'):_autoT('wallet_locked_fail');
 					}
 					else if ($wallet_from->status == 'locked') {
-						$result->message = "El monedero ya se encuentra bloqueado.";
+						$result->message = _autoT('wallet_locked_is');
 					}
 					else {
-						$result->message = "El monedero no se puede bloquear.";
+						$result->message = _autoT('wallet_locked_restring');
 					}
 				} else {
-					$result->message = ("waller_not_found");
+					$result->message = _autoT("wallet_locked_fail");
 				}
 			}
 			else {
-				$result->message = "Datos incompletos.";
+				$result->message = _autoT("request_invalid");
 			}
 			exit(json_encode($result));
 		}
@@ -144,14 +156,14 @@ if(isset($_REQUEST['cmrfid']) && $_REQUEST['cmrfid'] == 'functions' && isset($_R
 					else {
 						$actived = $wallet_from->actived();
 						$result->error = !$actived;
-						$result->message = $actived==true?"Monedero activado":"Error al tratar de activar el monedero.";
+						$result->message = $actived==true?_autoT('wallet_actived'):_autoT('wallet_actived_error');
 					}
 				} else {
-					$result->message = "Acceso denegado.";
+					$result->message = _autoT('access_fail');
 				}
 			}
 			else {
-				$result->message = "Datos incompletos.";
+				$result->message = _autoT("request_invalid");
 			}
 			exit(json_encode($result));
 		}
@@ -165,19 +177,19 @@ if(isset($_REQUEST['cmrfid']) && $_REQUEST['cmrfid'] == 'functions' && isset($_R
 				$wallet_from->get_by_puid_and_pin($_REQUEST['wallet'], $_REQUEST['pin']);
 				if($wallet_from->id > 0){
 					if ($wallet_from->status == 'lost') {
-						$result->message = "El monedero ya se encuentra reportado.";
+						$result->message = "wallet_locked_is";
 					}
 					else {
 						$actived = $wallet_from->losted();
 						$result->error = !$actived;
-						$result->message = $actived==true?"Monedero reportado":"Error al tratar de reportar el monedero.";
+						$result->message = $actived==true?_autoT('wallet_locked_success'):_autoT('wallet_locked_fail');
 					}
 				} else {
-					$result->message = "Acceso denegado.";
+					$result->message = _autoT("access_fail");
 				}
 			}
 			else {
-				$result->message = "Datos incompletos.";
+				$result->message = _autoT("request_invalid");
 			}
 			exit(json_encode($result));
 		}
@@ -194,11 +206,11 @@ if(isset($_REQUEST['cmrfid']) && $_REQUEST['cmrfid'] == 'functions' && isset($_R
 					$result->error = !$updated;
 					$result->message = $updated==true?"Modificado con éxito.":"Error al tratar de modificar.";
 				} else {
-					$result->message = "Acceso denegado.";
+					$result->message = _autoT("access_fail");
 				}
 			}
 			else {
-				$result->message = "Datos incompletos.";
+				$result->message = _autoT("request_invalid");
 			}
 			exit(json_encode($result));
 		}

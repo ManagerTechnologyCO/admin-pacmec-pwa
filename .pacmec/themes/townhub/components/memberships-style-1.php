@@ -32,8 +32,8 @@
 					-->
 					<div class="grid-opt">
 						<ul class="no-list-style">
-							<li class="grid-opt_act"><span class="two-col-grid act-grid-opt tolt" data-microtip-position="bottom" :data-tooltip="_autoT('grid_view')"><i class="fal fa-th"></i></span></li>
-							<li class="grid-opt_act"><span class="one-col-grid tolt" data-microtip-position="bottom" :data-tooltip="_autoT('list_view')"><i class="fal fa-list"></i></span></li>
+							<li class="grid-opt_act"><span class="two-col-grid act-grid-opt tolt2" data-tippy-content="<?= _autoT('grid_view'); ?>"><i class="fal fa-th"></i></span></li>
+							<li class="grid-opt_act"><span class="one-col-grid tolt2" data-tippy-content="<?= _autoT("list_view"); ?>"><i class="fal fa-list"></i></span></li>
 						</ul>
 					</div>
 				</div>
@@ -48,11 +48,13 @@
                 if($i>=$limit) break;
                 $url = "/memberships?membership_id={$membership->id}";
                 ?>
-                <div class="listing-item">
+                <div class="listing-item" id="membership-<?=$membership->id; ?>">
     							<article class="geodir-category-listing fl-wrap">
     								<div class="geodir-category-img">
-    									<!-- // <div class="geodir-js-favorite_btn"><i class="fal fa-cash-register"></i><span>Tomar plan</span></div> -->
-    									<a href="<?= $url; ?>" class="geodir-category-img-wrap fl-wrap">
+											<?php if($active_pays == true): ?>
+    										<div onclick="javascript:takeMembership(<?= $membership->id; ?>)" class="geodir-js-favorite_btn"><i class="fal fa-cash-register"></i><span>Tomar plan</span></div>
+											<?php endif; ?>
+											<a href="<?= $url; ?>" class="geodir-category-img-wrap fl-wrap">
     										<img src="<?= (!empty($membership->thumb)) ? $membership->thumb : '/townhub/images/all/1.jpg'; ?>" alt="" />
     									</a>
                        <?php if($membership->initial_payment>0): ?>
@@ -159,3 +161,90 @@
 	</section>
 	<div class="limit-box fl-wrap"></div>
 </div>
+
+<script>
+const memberships = <?= json_encode($memberships); ?>;
+const takeMembership = function(membership_id){
+	console.log('takeMembership', membership_id);
+	let membership = memberships.find(a => a.id == membership_id);
+	console.log('membership', membership);
+
+	let amountTotal = parseFloat(membership.initial_payment) + parseFloat(membership.billing_amount);
+
+	Swal.queue([{
+	  title: "Valor a cobrar: $ " + amountTotal.toLocaleString() + ' COP',
+	  html: Þ("#membership-"+membership_id).html(),
+		confirmButtonText: 'Aceptar y continuar',
+	  showLoaderOnConfirm: true,
+	  preConfirm: () => {
+			let final = null;
+			return PACMEC.core.get('/', {params: {
+				controller: 'PaymentEvents',
+				action: 'WompiCreateAffiliate',
+				membership: membership_id,
+			}})
+			.then((response) => {
+				final = response;
+			})
+			.catch((error) => {
+				console.log('error', error);
+				final = error.response;
+			})
+			.finally(()=>{
+				console.log('final', final);
+				if(final.status == 200 && final.data.error == false){
+					let options = {
+						currency: "<?= infosite('site_currency'); ?>",
+						amountInCents: (amountTotal*100),
+						reference: final.data.message,
+						publicKey: WCO.pub,
+						redirectUrl: location.href // Opcional
+					};
+					let checkout = new WidgetCheckout(options);
+					checkout.open(function ( result ) {
+						console.log('result', result);
+						if(result.transaction){
+							var transaction = result.transaction;
+							console.log('Transaction ID: ', transaction.id);
+							console.log('Transaction object: ', transaction);
+							let timerInterval;
+							return Swal.fire({
+								icon: 'success',
+								title: "<?= _autoT('add_balance_success_title'); ?>",
+								text: "<?= _autoT('transaction_id'); ?>" + ': ' + transaction.id + ' ' + "<?= _autoT('transaction_status'); ?>" + ': ' + transaction.status + ' - ' + "<?= _autoT('loading_wait'); ?>",
+								timer: 10000,
+								timerProgressBar: true,
+								didOpen: () => {
+									Swal.showLoading()
+								},
+								willClose: () => {
+									clearInterval(timerInterval)
+									location.reload();
+								}
+							}).then((result) => {
+								if (result.dismiss === Swal.DismissReason.timer) {
+									console.log('I was closed by the timer')
+									//location.reload();
+								}
+							})
+						} else {
+							Swal.insertQueueStep({
+								icon: 'error',
+								title: "<?= _autoT('add_balance_error'); ?>"
+							})
+						}
+					});
+				} else {
+					console.log('ups', final.data);
+					Swal.insertQueueStep({
+						icon: 'error',
+						title: final.data.message
+					})
+				}
+			});
+	  }
+	}])
+}
+
+
+</script>

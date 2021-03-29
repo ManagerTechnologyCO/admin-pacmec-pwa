@@ -20,7 +20,7 @@ $r_message = null;
 	<div class="dashboard-list-box  fl-wrap">
 			<div class="dashboard-list fl-wrap" v-if="payment!==null">
 					<div class="dashboard-message">
-							<span style="cursor:pointer;" @click="cancelToken(payment.id)" class="new-dashboard-item"><i class="fal fa-times"></i></span>
+							<!--//<span style="cursor:pointer;" @click="cancelToken(payment.id)" class="new-dashboard-item"><i class="fal fa-times"></i></span>-->
 							<div class="dashboard-message-text">
 									<i v-if="payment.source_status == 'AVAILABLE' && (payment.token_status == 'APPROVED' || payment.token_status == 'CREATED')" class="fal fa-check green-bg"></i>
 									<i v-else-if="payment.source_status == 'AVAILABLE' && (payment.token_status == 'PENDING' || payment.source_status == 'PENDING')" class="fal fa-hourglass-half yellow-bg"></i>
@@ -62,13 +62,13 @@ $r_message = null;
                       <fieldset v-if="merchants!==null">
                         <div class="row">
                           <div class="col-md-12">
-                            <label class="vis-label">{{translateField('customer_email')}}<i class="far fa-user"></i></label>
+                            <label class="vis-label">{{translateField('holder_name')}}<i class="far fa-user"></i></label>
                             <input type="text" placeholder="" value="" v-model="form_create.holder_name" required="" />
                           </div>
                         </div>
                         <div class="row">
                           <div class="col-md-12">
-                            <label class="vis-label">{{translateField('customer_email')}}<i class="far fa-at"></i></label>
+                            <label class="vis-label">{{translateField('holder_email')}}<i class="far fa-at"></i></label>
                             <input type="email" placeholder="" value="" v-model="form_create.holder_email" required="" />
                           </div>
                         </div>
@@ -108,13 +108,13 @@ $r_message = null;
                       <fieldset v-if="merchants!==null">
                         <div class="row">
                           <div class="col-sm-12">
-                            <label class="vis-label">{{translateField('customer_email')}}<i class="far fa-user"></i></label>
+                            <label class="vis-label">{{translateField('holder_name')}}<i class="far fa-user"></i></label>
                             <input type="text" placeholder="" value="" v-model="form_create.holder_name" required="" />
                           </div>
                         </div>
                         <div class="row">
                           <div class="col-sm-12">
-                            <label class="vis-label">{{translateField('customer_email')}}<i class="far fa-at"></i></label>
+                            <label class="vis-label">{{translateField('holder_email')}}<i class="far fa-at"></i></label>
                             <input type="email" placeholder="" value="" v-model="form_create.holder_email" required="" />
                           </div>
                         </div>
@@ -171,6 +171,10 @@ $r_message = null;
         </div>
       </div>
 		</template>
+
+		<p>
+			<strong><?= _autoT('important')?>: </strong> <?= _autoT('me_payme_more_info')?>
+		</p>
 	</div>
 </div>
 

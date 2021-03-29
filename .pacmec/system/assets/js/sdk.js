@@ -37,11 +37,10 @@ try {
 
   	runLoad(){
   		console.log('runLoad');
+      this.divsRoot = document.getElementsByTagName("mt:root");
   		if(this.divsRoot.length==0){
   			let divRoot = document.createElement("mt:root");
   			//divRoot.textContent = "ROOT MT CARGADO...";
-  			//   this.body.insertBefore(divRoot, this.body.firstChild);
-  			//   this.divsRoot = document.getElementsByTagName("mt:root");
   		}
   	}
 
@@ -220,9 +219,11 @@ try {
   		return this.create('login', { username: nick, password: hash }, cb, '/');
   	}
 
-  	logout(cb){
-  		this.create("logout", {}, cb, '/');
-  		location.reload();
+  	logout(){
+  		this.create("logout", {}, (a)=>{
+        location.reload();
+        return a;
+      }, '/');
   	}
 
   	getLoginStatus(cb){
@@ -375,7 +376,9 @@ try {
   		let result = null;
   		this.api.post(path + url, params)
   		.then((s) => { result = s; })
-  		.catch((e) => { result = e.response; })
+  		.catch((e) => {
+        result = e.response;
+      })
   		.finally(() => {
   			return self.validateResponseAPI(result, cb);
   		});

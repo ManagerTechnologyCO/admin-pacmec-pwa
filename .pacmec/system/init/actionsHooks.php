@@ -115,4 +115,73 @@ function pacmec_ul_no_list_style_one_level_social_icons($atts, $content='')
 }
 add_shortcode('pacmec-ul-no-list-style-one-level-social-icons', 'pacmec_ul_no_list_style_one_level_social_icons');
 
-// do_shortcode('[pacmec-forms class="custom-form" form_id="1"][/pacmec-forms]');
+/**
+*
+* VIEW API DOCS
+*
+* @param array  $atts
+* @param string  $content
+*/
+function pacmec_api_docs($atts, $content='')
+{
+  try {
+    $repair = shortcode_atts([
+    ], $atts);
+    echo '
+    <main>
+      <div class="pacmec-card-4">
+        <header class="pacmec-container pacmec-blue">
+          <h1>OPENAPI</h1>
+        </header>
+        <div class="pacmec-container" style="background: #FFF;">
+          <redoc style="position:static;background;#FFF;" spec-url="'.infosite('siteurl').'/pacmec-api/openapi"></redoc>
+        </div>
+        <footer class="pacmec-container pacmec-blue">
+          <h5>Footer</h5>
+        </footer>
+
+        <script src="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"> </script>
+      </div>
+    </main>
+    ';
+  } catch (\Exception $e) {
+    return "Ups: pacmec_api_docs: " . $e->getMessage();
+  }
+}
+add_shortcode('pacmec-api-docs', 'pacmec_api_docs');
+
+/**
+*
+* Solvemedia CAPTCHA
+*
+* @param array  $atts
+* @param string  $content
+*/
+function pacmec_solvemedia($atts, $content='')
+{
+  try {
+    $repair = shortcode_atts([
+      'C-key' => "hqf0HycsKOX3uP9.ggJtdy7tUdEOM8Ce",
+      'V-key' => "d6VKOKzFJwZCcUdD5AVKCAe71Pk3wZxX",
+      'H-key' => "7Th0LSusSK9vuGUX7NuB523TtUYzVU2j"
+    ], $atts);
+    $privkey = $repair['V-key'];
+    $hashkey = $repair['H-key'];
+    $solvemedia_response = solvemedia_check_answer($privkey,
+    					$_SERVER["REMOTE_ADDR"],
+    					$_POST["adcopy_challenge"],
+    					$_POST["adcopy_response"],
+    					$hashkey);
+    if (!$solvemedia_response->is_valid) {
+    	//handle incorrect answer
+    	print "Error: ".$solvemedia_response->error;
+    }
+    else {
+    	//process form here
+
+    }
+  } catch (\Exception $e) {
+    return "Ups: pacmec_solvemedia: " . $e->getMessage();
+  }
+}
+add_shortcode('pacmec-api-docs', 'pacmec_solvemedia');

@@ -49,41 +49,13 @@ class WalletController extends \PACMEC\ControladorBase
 		$this->message = $message;
 	}
 
-    public function index(){
-		echo json_encode($this);
-		return json_encode($this);
-    }
+  public function index(){
+	echo json_encode($this);
+	return json_encode($this);
+  }
 
-	/*
-    public function add(){
-		if(!isset($_REQUEST['amount']) || empty($_REQUEST['amount'])) {
-			$this->setError("Monto no ingresado.");
-			echo json_encode($this);
-			return json_encode($this);
-		}
-		$result_r = $this->model_wallet->add_balance((float) $_REQUEST['amount']);
-		if(isset($result_r)){
-			if($result_r!==false){
-				$this->setSuccess("Agregado con éxito ({$_REQUEST['amount']}) .");
-			} else {
-				$this->setError("Ocurrio un error intente nuevamente.");
-			}
-		} else {
-			$this->setError("Ups, Ocurrio un error intente nuevamente.");
-		}
-		echo json_encode($this);
-		return json_encode($this);
-    }
-
-    public function subtract(){
-		header('Content-Type: application/json');
-    }
-
-    public function clearing(){
-		header('Content-Type: application/json');
-    }*/
-
-    public function exchangeMw2Mw(){
+  public function exchangeMw2Mw()
+	{
 		if(!isset($_REQUEST['amount']) || empty($_REQUEST['amount'])) {
 			$this->setError(_autoT("required_amount"));
 			echo json_encode($this);
@@ -96,22 +68,23 @@ class WalletController extends \PACMEC\ControladorBase
 		}
 		$wallet_to = new \PACMEC\Wallet();
 		$wallet_to->exist_wallet_by_puid($_REQUEST['to']);
-			if($wallet_to->id>0){
-				$r_from = $this->model_wallet->subtract_balance((float) $_REQUEST['amount'], 'transfer_out');
-				$r_to = $wallet_to->add_balance((float) $_REQUEST['amount'], 'transfer_in');
-				if($r_from == true && $r_to == true){
-					$this->setSuccess(_autoT("exchange_success"));
-				} else {
-					$this->setError(_autoT("exchange_fail"));
-				}
+		if($wallet_to->id>0){
+			$r_from = $this->model_wallet->subtract_balance((float) $_REQUEST['amount'], 'transfer_out');
+			$r_to = $wallet_to->add_balance((float) $_REQUEST['amount'], 'transfer_in');
+			if($r_from == true && $r_to == true){
+				$this->setSuccess(_autoT("exchange_success"));
 			} else {
-				$this->setError(_autoT("wallet_to_no_exist"));
+				$this->setError(_autoT("exchange_fail"));
 			}
-			echo json_encode($this);
-			return json_encode($this);
-    }
+		} else {
+			$this->setError(_autoT("wallet_to_no_exist"));
+		}
+		echo json_encode($this);
+		return json_encode($this);
+  }
 
-  public function changeStatus(){
+  public function changeStatus()
+	{
 		$status = ['actived','losted','locked'];
 		if(!isset($_REQUEST['status']) || empty($_REQUEST['status'])) {
 			$this->setError(_autoT("required_status"));

@@ -15,6 +15,57 @@ class Affiliates extends ModeloBase {
 		parent::__construct('affiliates', true);
   }
 
+	public function load_signup_plan($id, $user_id=null){
+		try {
+      if(!isset($user_id) && isset($_SESSION['user']['id'])) $user_id = $_SESSION['user']['id'];
+
+			$sql = "Select * FROM `{$this->getPrefix()}memberships` WHERE `allow_signups` IN (1) AND `id` IN (?)";
+			$result = $this->FetchObject($sql, [$id]);
+      if($result!==false&&$result->id>0){
+        $this->membership = $result->id;
+        $this->user_id = $user_id !== null ? $user_id : 0;
+        $this->code_id = \randString(11);
+        $this->initial_payment = $result->initial_payment;
+        $this->billing_amount = $result->billing_amount;
+        $this->cycle_number = $result->cycle_number;
+        $this->cycle_period = $result->cycle_period;
+        $this->max_members = $result->max_members;
+        $this->created_by = $user_id !== null ? $user_id : 0;
+        $this->modified_by = $user_id !== null ? $user_id : 0;
+        $this->status = 'pending';
+        $f_d = infosite('memberships_format_cycle_date_calc') . " " . infosite('memberships_format_cycle_time_calc');
+        $date = date($f_d);
+        $date1 = str_replace('-', '/', $date);
+  			switch($result->cycle_period){
+  				case "Day":
+  					$this->startdate = $date;
+  					$this->enddate = date($f_d, strtotime($date1 . "+{$result->cycle_number} days"));
+  					break;
+  				case "Week":
+  					$this->startdate = $date;
+  					$this->enddate = date($f_d, strtotime($date1 . "+{$result->cycle_number} weeks"));
+  					break;
+  				case "Month":
+  					$this->startdate = $date;
+  					$this->enddate = date($f_d, strtotime($date1 . "+{$result->cycle_number} months"));
+  					break;
+  				case "Year":
+  					$this->startdate = $date;
+  					$this->enddate = date($f_d, strtotime($date1 . "+{$result->cycle_number} years"));
+  					break;
+  				default:
+  					$this->startdate = $date;
+  					$this->enddate = date($f_d, strtotime($date1 . "+1 days"));
+  					break;
+  			}
+      }
+      return $this;
+		}
+		catch(\Exception $e){
+			return [];
+		}
+	}
+
 	public function update(){
 		$columns = $this->getColumns();
 		$columns_a = [];
@@ -122,7 +173,6 @@ class Affiliates extends ModeloBase {
           return false;
       }
   }
-
 
   public function MeHistory(){
     try {

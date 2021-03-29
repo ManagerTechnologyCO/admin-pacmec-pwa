@@ -16,19 +16,17 @@ $meinfo = meinfo();
 		<section class="parallax-section dashboard-header-sec gradient-bg" data-scrollax-parent="true">
 			<div class="container">
 				<div class="tfp-btn">
-					<span><?= _autoT('membership'); ?>: </span>
+					<span><?= _autoT(isMember() ? ('membership') : 'renew_membership'); ?>: </span>
           <?php if (isset($membership)): ?>
-            <strong><?= (isMember()? _autoT('membership_' . $membership->membership->id):'membership_expired'); ?></strong>
+            <strong><?= _autoT(isMember()? ('membership_' . $membership->membership->id):'membership_expired'); ?></strong>
           <?php endif; ?>
 				</div>
 				<div class="tfp-det">
 					<!--//<p>You Are on <a href="#">Extended</a> . Use link bellow to view details or upgrade. </p>-->
-          <?php if (isMember()): ?>
-            <p><?= _autoT($membership!==null ? _autoT('membership_' . $membership->membership->id . '_description') : 'membership_expired'); ?></p>
-          <?php endif; ?>
-          <?php if (isset($membership->id)&&$membership->id>0): ?>
-            <a href="/me/membership" class="tfp-det-btn color2-bg"><?= _autoT('view_membership'); ?></a>
-          <?php endif; ?>
+					<p><?= _autoT(isMember() ? ('membership_' . $membership->membership->id . '_description') : 'membership_expired'); ?></p>
+					<a href="/me/membership" class="tfp-det-btn color2-bg">
+						<?= _autoT(isMember() ? 'view_membership' : 'renew_membership'); ?>
+					</a>
 				</div>
 				<div class="dashboard-header_conatiner fl-wrap dashboard-header_title">
 					<h1><?= me("username"); ?>: <span><?= me("display_name"); ?></span></h1>
@@ -108,8 +106,8 @@ $meinfo = meinfo();
 					<div class="fixed-bar fl-wrap" id="dash_menu">
 						<div class="user-profile-menu-wrap fl-wrap block_box">
 							<div class="user-profile-menu">
-							<?php if($meinfo->payment == null): ?>
 								<ul class="no-list-style" v-if="payment == null">
+									<?php if($meinfo->payment == null): ?>
 									<li>
 										<a href="/me/add/payment">
 											<i class="fas fa-credit-card-front"></i>
@@ -117,8 +115,18 @@ $meinfo = meinfo();
 											<span style="width: auto;border-radius: 5px;"><?= _autoT('important'); ?> </span>
 										</a>
 									</li>
+									<?php endif; ?>
+									<?php if(!isMember()): ?>
+									<li>
+										<a href="/me/membership">
+											<i class="fas fa-credit-card-front"></i>
+											<?= _autoT('renew_membership'); ?>
+											<span style="width: auto;border-radius: 5px;"><?= _autoT('important'); ?> </span>
+										</a>
+									</li>
+									<?php endif; ?>
 								</ul>
-								<?php endif; ?>
+
                 <?= do_shortcode('[pacmec-ul-no-list-style class="no-list-style" menu_slug="me_profile_memberships"][/pacmec-ul-no-list-style]'); ?>
                 <?= do_shortcode('[pacmec-ul-no-list-style class="no-list-style" menu_slug="me_profile"][/pacmec-ul-no-list-style]'); ?>
 							</div>

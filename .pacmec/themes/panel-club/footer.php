@@ -8,68 +8,68 @@
  * @version    1.0.1
  */
 ?>
-<style>
-  .panel-table .panel-body{
-    padding:0;
-  }
+    <style>
+      .panel-table .panel-body{
+        padding:0;
+      }
 
-  .panel-table .panel-body .table-bordered{
-    border-style: none;
-    margin:0;
-  }
+      .panel-table .panel-body .table-bordered{
+        border-style: none;
+        margin:0;
+      }
 
-  .panel-table .panel-body .table-bordered > thead > tr > th:first-of-type {
-      text-align:center;
-      width: 100px;
-  }
+      .panel-table .panel-body .table-bordered > thead > tr > th:first-of-type {
+          text-align:center;
+          width: 100px;
+      }
 
-  .panel-table .panel-body .table-bordered > thead > tr > th:last-of-type,
-  .panel-table .panel-body .table-bordered > tbody > tr > td:last-of-type {
-    border-right: 0px;
-  }
+      .panel-table .panel-body .table-bordered > thead > tr > th:last-of-type,
+      .panel-table .panel-body .table-bordered > tbody > tr > td:last-of-type {
+        border-right: 0px;
+      }
 
-  .panel-table .panel-body .table-bordered > thead > tr > th:first-of-type,
-  .panel-table .panel-body .table-bordered > tbody > tr > td:first-of-type {
-    border-left: 0px;
-  }
+      .panel-table .panel-body .table-bordered > thead > tr > th:first-of-type,
+      .panel-table .panel-body .table-bordered > tbody > tr > td:first-of-type {
+        border-left: 0px;
+      }
 
-  .panel-table .panel-body .table-bordered > tbody > tr:first-of-type > td{
-    border-bottom: 0px;
-  }
+      .panel-table .panel-body .table-bordered > tbody > tr:first-of-type > td{
+        border-bottom: 0px;
+      }
 
-  .panel-table .panel-body .table-bordered > thead > tr:first-of-type > th{
-    border-top: 0px;
-  }
+      .panel-table .panel-body .table-bordered > thead > tr:first-of-type > th{
+        border-top: 0px;
+      }
 
-  .panel-table .panel-footer .pagination{
-    margin:0;
-  }
+      .panel-table .panel-footer .pagination{
+        margin:0;
+      }
 
-  /*
-  used to vertically center elements, may need modification if you're not using default sizes.
-  */
-  .panel-table .panel-footer .col{
-   line-height: 34px;
-   height: 34px;
-  }
+      /*
+      used to vertically center elements, may need modification if you're not using default sizes.
+      */
+      .panel-table .panel-footer .col{
+       line-height: 34px;
+       height: 34px;
+      }
 
-  .panel-table .panel-heading .col h3{
-   line-height: 30px;
-   height: 30px;
-  }
+      .panel-table .panel-heading .col h3{
+       line-height: 30px;
+       height: 30px;
+      }
 
-  .panel-table .panel-body .table-bordered > tbody > tr > td{
-    line-height: 34px;
-  }
-</style>
+      .panel-table .panel-body .table-bordered > tbody > tr > td{
+        line-height: 34px;
+      }
+    </style>
 
     <template id="home">
       <div>
         <div class="d-grid gap-3" style="text-align:left;">
           <div class="bg-light border rounded-3">
-            <form class="w-100 me-3" v-on:submit="searchInfo" novalidate>
+            <form class="w-100 me-3" v-on:submit="searchInfo" novalidate action="javascript:return;">
                 <div class="input-group">
-                  <input v-model="search.query" id="wallet-q" type="text" class="form-control" aria-label="Text input with segmented dropdown button" />
+                  <input v-model="search.query" id="wallet-q" type="text" class="form-control" autocomplete="off" />
                   <button style="width:126px;" type="submit" class="btn btn-outline-secondary">{{_autoT('search')}}</button>
 
                   <!--//
@@ -334,14 +334,7 @@
                   <table class="table table-hover">
                     <thead>
                       <tr>
-                        <th scope="col" colspan="2">{{_autoT('memberships_benefit')}}</th>
-                        <th scope="col" colspan="2">{{_autoT('memberships_limit_date')}}</th>
-                        <th scope="col" colspan="1"></th>
-                        <th scope="col" colspan="2">{{_autoT('memberships_count')}}</th>
-                        <th scope="col" colspan="4">{{_autoT('memberships_available_vs_limit')}}</th>
-                      </tr>
-                      <tr>
-                        <th scope="col"></th>
+                        <th scope="col" colspan="2"></th>
                         <th scope="col">{{_autoT('benefits_name')}}</th>
                         <th scope="col">{{_autoT('benefits_days')}}</th>
                         <th scope="col">{{_autoT('benefits_months')}}</th>
@@ -350,11 +343,17 @@
                         <th scope="col">{{_autoT('benefits_limit_week')}}</th>
                         <th scope="col">{{_autoT('benefits_limit_month')}}</th>
                         <th scope="col">{{_autoT('benefits_limit_year')}}</th>
+                        <th scope="col"></th>
                       </tr>
                     </thead>
                     <tbody>
                       <template class="box-widget-item fl-wrap block_box" v-for="(include, include_i) in membership.benefits">
                         <tr>
+                          <!--
+                          <th>
+                            {{include.id}}::{{include.feature.id}}
+                          </th>
+                          -->
                           <th>
                             <span class="tolt3" :title="_autoT(include.type)">
                               <i :class="$root.translate_slugs_icons[include.type]"></i>
@@ -399,7 +398,14 @@
                           </td>
                           <td>
                             <template v-if="include.limit_day!==null">
-                              {{ include.available_day }} / {{ include.limit_day }}
+                              <template v-if="include.available_day>=1">
+                                <a class="btn btn-primary btn-sm" @click="addExpense(include.id, include.available_day)">
+                                  {{ include.available_day }} / {{ include.limit_day }}
+                                </a>
+                              </template>
+                              <template v-else>
+                                {{ include.available_day }} / {{ include.limit_day }}
+                              </template>
                             </template>
                             <template v-else>
                               {{_autoT('Unlimited')}}	&nbsp;
@@ -407,7 +413,14 @@
                           </td>
                           <td>
                             <template v-if="include.limit_week!==null">
-                              {{ include.available_week }} / {{ include.limit_week }}
+                              <template v-if="include.available_week>=1">
+                                <a class="btn btn-primary btn-sm" @click="addExpense(include.id, include.available_week)">
+                                  {{ include.available_week }} / {{ include.limit_week }}
+                                </a>
+                              </template>
+                              <template v-else>
+                                {{ include.available_week }} / {{ include.limit_week }}
+                              </template>
                             </template>
                             <template v-else>
                               {{_autoT('Unlimited')}} 	&nbsp;
@@ -415,7 +428,14 @@
                           </td>
                           <td>
                             <template v-if="include.limit_month!==null">
-                              {{ include.available_month }} / {{ include.limit_month }}
+                              <template v-if="include.available_month>=1">
+                                <a class="btn btn-primary btn-sm" @click="addExpense(include.id, include.available_month)">
+                                  {{ include.available_month }} / {{ include.limit_month }}
+                                </a>
+                              </template>
+                              <template v-else>
+                                {{ include.available_month }} / {{ include.limit_month }}
+                              </template>
                             </template>
                             <template v-else>
                               {{_autoT('Unlimited')}} 	&nbsp;
@@ -423,11 +443,23 @@
                           </td>
                           <td>
                             <template v-if="include.limit_year!==null">
-                              {{ include.available_year }} / {{ include.limit_year }}
+                              <template v-if="include.available_year>=1">
+                                <a class="btn btn-success btn-sm" @click="addExpense(include.id, include.available_year)">
+                                  {{ include.available_year }} / {{ include.limit_year }}
+                                </a>
+                              </template>
+                              <template v-else>
+                                {{ include.available_year }} / {{ include.limit_year }}
+                              </template>
                             </template>
                             <template v-else>
                               {{_autoT('Unlimited')}} 	&nbsp;
                             </template>
+                          </td>
+                          <td style="padding: 6px; white-space: nowrap;">
+                            <a @click="giftExpense(include.id)" class="btn btn-warning btn-sm">
+                              {{_autoT('wallets_add_expense')}}
+                            </a>
                           </td>
                         </tr>
                       </template>
@@ -567,7 +599,7 @@
               <div class="panel-body">
                 <div class="card bg-light" v-if="field">
                   <div class="card-body">
-                    <div style="float:right;"><router-link v-bind:to="{name: 'List', params: {subject: subject}}">Clear filter</router-link></div>
+                    <div style="float:right;"><router-link v-bind:to="{name: 'List', params: {subject: subject}}">{{_autoT('Clear_filter')}}</router-link></div>
                     <p class="card-text">Filtered by: {{ field }} = {{ id }}</p>
                   </div>
                 </div>
@@ -583,12 +615,19 @@
                     </thead>
                     <tbody>
                       <tr v-for="record in records">
-                        <template v-for="(value, key) in record">
-                          <td v-if="references[key] !== false">
-                            <router-link v-bind:to="{name: 'View', params: {subject: references[key], id: referenceId(references[key], record[key])}}">{{ referenceText(references[key], record[key]) }}</router-link>
+                        <template v-for="propiety in Object.keys(properties)">
+                          <td v-if="references[propiety] !== false && referenceText(references[propiety], record[propiety]) !== null">
+                            <router-link v-bind:to="{name: 'View', params: {subject: references[propiety], id: referenceId(references[propiety], record[propiety])}}">{{ referenceText(references[propiety], record[propiety]) }}</router-link>
+                            <!--//<a v-else>{{key}}: {{ value }}</a>-->
                           </td>
-                          <td v-else>{{ value }}</td>
+                          <td v-else>
+                            {{ record[propiety] }}
+                          </td>
                         </template>
+                      <!--//
+                        <template v-for="(value, key) in record">
+                        </template>
+                      -->
                         <td v-if="related">
                           <template v-for="(relation, i) in referenced">
                             <router-link v-bind:to="{name: 'Filter', params: {subject: relation[0], field: relation[1], id: record[primaryKey]}}">{{ _autoT(relation[0]) }}</router-link>&nbsp;
@@ -630,21 +669,29 @@
 
     <template id="create">
       <div class="container">
-        <h2>{{ subject }} - add</h2>
-        <form v-on:submit="createRecord">
-          <template v-for="(value, key) in record">
-            <div class="form-group">
-              <label v-bind:for="key">{{ key }}</label>
-              <input v-if="references[key] === false" class="form-control" v-bind:id="key" v-model="record[key]" :disabled="key === primaryKey" />
-              <select v-else class="form-control" v-bind:id="key" v-model="record[key]">
-                <option value=""></option>
-                <option v-for="option in options[references[key]]" v-bind:value="option.key">{{ option.value }}</option>
-              </select>
-            </div>
-          </template>
-          <button type="submit" class="btn btn-primary">Create</button>
-          <router-link class="btn btn-primary" v-bind:to="{name: 'List', params: {subject: subject}}">Cancel</router-link>
-        </form>
+        <div class="row">
+          <h1>{{ _autoT(subject) }} - {{_autoT('create_record')}}</h1>
+          <p>A simple example of how-to put a bordered table within a panel. Responsive, place holders in header/footer for buttons or pagination.</p>
+          <p> </p>
+          <p> </p>
+          <form class="text-start" action="javascript:return;" v-on:submit="createRecord">
+            <template v-for="(value, key) in record">
+              <div class="mb-3">
+                <label v-bind:for="key" class="form-label">{{_autoT(subject+'_'+key)}}</label>
+                <input type="email" class="form-control" :aria-describedby="_autoT(subject+'_'+key)" v-if="references[key] === false" v-bind:id="key" v-model="record[key]" :disabled="key === primaryKey">
+                <select v-else class="form-control" v-bind:id="key" v-model="record[key]">
+                  <option value=""></option>
+                  <option v-for="option in options[references[key]]" v-bind:value="option.key">{{ option.value }}</option>
+                </select>
+                <div id="emailHelp" class="form-text">
+
+                </div>
+              </div>
+            </template>
+            <button type="submit" class="btn btn-primary">{{_autoT('create_record')}}</button>
+            <router-link class="btn btn-default" v-bind:to="{name: 'List', params: {subject: subject}}">{{_autoT('cancel')}}</router-link>
+          </form>
+        </div>
       </div>
     </template>
 
@@ -853,6 +900,8 @@
       };
 
       var pacmec_globals = {
+        data: {
+        },
         methods: {
           _autoT(field_slug){
             return this.$root.translateField(field_slug);
@@ -1360,6 +1409,109 @@
       				});
       			});
       		},
+          addExpense(feature_id, limit){
+      			let self = this;
+            console.log('limit', limit)
+      			var dialog = bootbox.dialog({
+      				title: self._autoT('add_expenses_title'),
+      				centerVertical: true,
+      				message: '<p><i class="fa fa-spin fa-spinner"></i> Espere ...</p>',
+      				onHide: function(e) {
+      					self.search.query = '';
+      					$("#wallet-q").focus();
+      				}
+      			});
+      			if(self.wallet !== null && self.wallet.id !==null && self.wallet.id > 0){
+      				bootbox.prompt({
+      					centerVertical: true,
+      					title: "Ingrese la cantidad",
+      					inputType: 'number',
+      					min: 1,
+      					max: limit,
+      					callback: function (quantity) {
+      						if(quantity !== null && quantity>0){
+      							PACMEC.create("expenses", {
+    									membership: self.membership.id,
+    									benefit: feature_id,
+    									wallet: self.wallet.id,
+    									type: 'spend',
+    									quantity: quantity,
+      							}, (r) => {
+      								if(r.error == false){
+      									dialog.find('.bootbox-body').html(self._autoT('add_expenses_success'));
+                        self.search.query  = self.wallet.uid;
+      									self.searchInfo();
+      								} else {
+                        dialog.find('.bootbox-body').html(self._autoT('add_expenses_fail'));
+      								}
+
+                      setTimeout(function(){
+      									dialog.modal('hide');
+      								}, 1750);
+      							})
+      						} else {
+      							dialog.modal('hide');
+      						}
+      					}
+      				});
+      			} else {
+      				dialog.find('.bootbox-body').html('<p>El monedero no es valido.</p>');
+      				setTimeout(function(){
+      					dialog.modal('hide');
+      				}, 1750);
+      			}
+      		},
+          giftExpense(feature_id){
+      			let self = this;
+      			var dialog = bootbox.dialog({
+      				title: self._autoT('gift_expenses_title'),
+      				centerVertical: true,
+      				message: '<p><i class="fa fa-spin fa-spinner"></i> Espere ...</p>',
+      				onHide: function(e) {
+      					self.search.query = '';
+      					$("#wallet-q").focus();
+      				}
+      			});
+      			if(self.wallet !== null && self.wallet.id !==null && self.wallet.id > 0){
+      				bootbox.prompt({
+      					centerVertical: true,
+      					title: "Ingrese la cantidad",
+      					inputType: 'number',
+      					min: 1,
+      					callback: function (quantity) {
+      						if(quantity !== null && quantity>0){
+      							PACMEC.create("expenses", {
+    									membership: self.membership.id,
+    									benefit: feature_id,
+    									wallet: self.wallet.id,
+    									type: 'saveup',
+    									quantity: quantity,
+      							}, (r) => {
+      								if(r.error == false){
+      									dialog.find('.bootbox-body').html(self._autoT('gift_expenses_success'));
+                        self.search.query  = self.wallet.uid;
+      									self.searchInfo();
+      								} else {
+                        dialog.find('.bootbox-body').html(self._autoT('gift_expenses_fail'));
+      								}
+
+                      setTimeout(function(){
+      									dialog.modal('hide');
+      								}, 1750);
+      							})
+      						} else {
+      							dialog.modal('hide');
+      						}
+      					}
+      				});
+      			} else {
+      				dialog.find('.bootbox-body').html('<p>El monedero no es valido.</p>');
+      				setTimeout(function(){
+      					dialog.modal('hide');
+      				}, 1750);
+      			}
+      		},
+
       	},
       });
 
@@ -1400,9 +1552,15 @@
         },
         methods: {
           referenceText(subject, record) {
-            var properties = this.getProperties('read', subject, this.definition);
-            var displayColumn = this.getDisplayColumn(Object.keys(properties));
-            return record[displayColumn];
+            try {
+              var properties = this.getProperties('read', subject, this.definition);
+              var displayColumn = this.getDisplayColumn(Object.keys(properties));
+              return (!(record[displayColumn])) ? null : Array.isArray(record[displayColumn]) ? (record[displayColumn].length>0 ? record[displayColumn] : null) : record[displayColumn];
+            } catch (e) {
+              return null;
+            } finally {
+
+            }
           },
           referenceId(subject, record) {
             var properties = this.getProperties('read', subject, this.definition);
@@ -1413,7 +1571,7 @@
       });
 
       var View = Vue.extend({
-        mixins: [util, orm],
+        mixins: [util, orm, pacmec_globals],
         template: '#view',
         props: ['definition'],
         data: function () {
@@ -1436,7 +1594,7 @@
       });
 
       var Edit = Vue.extend({
-        mixins: [util, orm],
+        mixins: [util, orm, pacmec_globals],
         template: '#update',
         props: ['definition'],
         data: function () {
@@ -1467,7 +1625,7 @@
       });
 
       var Delete = Vue.extend({
-        mixins: [util, orm],
+        mixins: [util, orm, pacmec_globals],
         template: '#delete',
         data: function () {
           return {
@@ -1480,7 +1638,7 @@
       });
 
       var Add = Vue.extend({
-        mixins: [util, orm],
+        mixins: [util, orm, pacmec_globals],
         template: '#create',
         props: ['definition'],
         data: function () {
@@ -1540,6 +1698,11 @@
       		options: {
       			users: [],
       		},
+          system: {
+            glossary: {
+              pendign_detect: [],
+            }
+          },
       		bracelets_types: {
       			'card' : "Tarjeta",
       			'keychain' : "Llavero",
@@ -1561,6 +1724,12 @@
       		translate_slugs_icons: {'access':'fas fa-key','comfort':'fas fa-sunglasses','benefit':'fas fa-heart','other':'fas fa-star','discount':'fas fa-badge-dollar'},
       		translate_cycles_periods_plu: {'Day':'Días','Week':'Semanas','Month':'Meses','Year':'Años'},
       		translate_cycles_periods_sin: {'Day':'Día','Week':'Semana','Month':'Mes','Year':'Año'},
+          forms: {
+            login: {
+              username: '',
+              password: '',
+            }
+          }
       	},
         created(){
           let self = this;
@@ -1623,7 +1792,10 @@
       				if(a.status == 200){
       					self.definition = a.response;
       					document.title = self.definition.info.title;
-      				}
+      				} else if(a.status == 401){
+
+                return;
+              }
       				PACMEC.list('glossary', {
       					join: [
       						'glossary_txt',
@@ -1681,7 +1853,15 @@
       				if(self.lang !== null && self.glossary !== null){
       					let label = self.lang_labels.find((z,x) => z.slug == field_slug);
       					if(label !== undefined && label.label !== undefined){ return label.label; }
-      				}
+              }
+              /*
+              self.system.glossary.pendign_detect.push({
+                glossary_id: self.lang_id,
+                tag: field_slug,
+                text: "Þ{" + field_slug + "}",
+              });
+              */
+
       				return "Þ{" + field_slug + "}";
               let parametros = {
                 filter: [
@@ -1706,7 +1886,20 @@
       				return "Þ{" + field_slug + "}";
       			}
       		},
+          login(){
+            let self = this;
+            PACMEC.submitLogin(self.forms.login.username, self.forms.login.password, (r_login) => {
+              console.log('r_login', r_login)
+              if(!(r_login.response.message)){
+                // Swal.fire(self.translateField('loading'), (z)=>{});
+                location.reload();
+              } else {
+                Swal.fire(r_login.response.message, (z)=>{
 
+                });
+              }
+            });
+          }
       		// zfill: PACMEC.format.zfill,
       		// formatMoney: PACMEC.format.formatMoney,
       		// makeid: PACMEC.format.makeid,

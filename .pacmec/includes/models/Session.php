@@ -23,6 +23,7 @@ Class Session
 	public  $permissions_items  = [];
 	public  $permissions        = [];
 	public  $notifications      = [];
+	public  $purses_to_send      = [];
 
 	/**
 	* Inicializa la sesión
@@ -142,9 +143,11 @@ Class Session
 		$payments = $GLOBALS['PACMEC']['DB']->FetchAllObject("SELECT * FROM `{$GLOBALS['PACMEC']['DB']->getPrefix()}wompi_tokens` WHERE `user_id` IN (?)", [$this->user->id]);
 		$this->payments = $payments!==false ? $payments : [];
 
+		$purses_to_send = $GLOBALS['PACMEC']['DB']->FetchAllObject("SELECT * FROM `{$GLOBALS['PACMEC']['DB']->getPrefix()}purses_to_send` WHERE `user_id` IN (?) AND `status` IN ('review','on_way')", [$this->user->id]);
+		$this->purses_to_send = $purses_to_send!==false ? $purses_to_send : [];
+
 		if(isset($this->user->permissions) && $this->user->permissions !== null && $this->user->permissions > 0 && count($this->permissions)==0){
 			try {
-
 				$sql = "SELECT E.*
 					FROM `{$GLOBALS['PACMEC']['DB']->getPrefix()}permissions` D
 					JOIN `{$GLOBALS['PACMEC']['DB']->getPrefix()}permissions_items` E

@@ -37,8 +37,11 @@ $beneficiaries = $meinfo->beneficiaries;
 			</p>
 		-->
 		<div class="fl-wrap">
-			<template v-for="(beneficiary, beneficiary_i) in beneficiaries"> <!-- v-if="(beneficiary_i+1)<=membership.max_members"-->
-				<div class="" style="width:100%;">
+ 			<div v-if="beneficiaries.length==0">
+ 					<?= _autoT('without_beneficiaries'); ?>
+ 			</div>
+			<template v-else v-for="(beneficiary, beneficiary_i) in beneficiaries"> <!---->
+				<div class="" style="width:100%;" v-if="(beneficiary_i+1)<=membership.max_members">
 					<div class="list-single-header list-single-header-inside block_box fl-wrap">
 						<div class="list-single-header-item  fl-wrap">
 							<div class="row">
@@ -82,9 +85,7 @@ $beneficiaries = $meinfo->beneficiaries;
 				</div>
 			</template>
 		</div>
-
 	</div>
-
 </div>
 
 <script>

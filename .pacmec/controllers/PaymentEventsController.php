@@ -35,6 +35,37 @@ class PaymentEventsController extends \PACMEC\ControladorBase {
 		return json_encode($this);
   }
 
+	public function WompiCreateAffiliate(){
+    $data = array_merge($_GET, $_POST);
+		if(!isset($data['user_id']) && isset($_SESSION['user']['id'])) $data['user_id'] = $_SESSION['user']['id'];
+		if(isset($data['membership']) && $data['user_id'] > 0){
+			if(meMembership()){
+				$this->setError(_autoT('request_invalid'));
+			} else {
+				$model_affiliates = new \PACMEC\Affiliates();
+				$model_memberships = $model_affiliates->load_signup_plan($data['membership']);
+				if($model_affiliates->membership > 0){
+					$insert = $model_affiliates->create();
+					if($model_affiliates->id > 0){
+						$this->setSuccess(
+							base64_encode(
+								base64_encode('affiliates') . "." . base64_encode($model_affiliates->code_id)
+							)
+						);
+					} else {
+						$this->setError(_autoT('membership_faild_create'));
+					}
+				} else {
+					$this->setError(_autoT('membership_invalid'));
+				}
+			}
+		} else {
+			$this->setError(_autoT('request_invalid'));
+		}
+		echo json_encode($this);
+		return json_encode($this);
+	}
+
 	public function WompiCreateRecharge(){
     $data = array_merge($_GET, $_POST);
 		if(!isset($data['user_id']) && isset($_SESSION['user']['id'])) $data['user_id'] = $_SESSION['user']['id'];
@@ -76,7 +107,7 @@ class PaymentEventsController extends \PACMEC\ControladorBase {
 				$model_WToken->token_status = 'CANCELED-USER';
 				$save = $model_WToken->update();
 				$this->error = !($save);
-				$this->message = ($save == true) ? 'wco_cancel_token_success' : 'wco_cancel_token_failed';
+				$this->message = ($save == true) ? _autoT('wco_cancel_token_success') : _autoT('wco_cancel_token_failed');
 			}
 		}
 		echo json_encode($this);
@@ -87,71 +118,86 @@ class PaymentEventsController extends \PACMEC\ControladorBase {
     $data = array_merge($_GET, $_POST);
 		sleep(5);
 		$environment = isset($data['environment']) ? $data['environment'] : null;
+		$checksum = isset($data['signature']->checksum) ? $data['signature']->checksum : null;
+		$properties = isset($data['signature']->properties) ? $data['signature']->properties : null;
 		$event = isset($data['event']) ? $data['event'] : null;
-		$data = isset($data['data']) ? $data['data'] : null;
+		$datas = isset($data['data']) ? $data['data'] : null;
+		$timestamp = isset($data['timestamp']) ? $data['timestamp'] : null;
 
-		if($event !== null && $environment !== null && $data !== null){
-			$model = new WompiSyncHistory();
+		if($event !== null && $environment !== null && !empty($data)){
+			$model = new \PACMEC\WompiSyncHistory();
 			$model->environment = $environment;
 			$model->event = $event;
-			$model->data = $data;
-			$model->sent_at = $data['sent_at'];
+			$model->data = $datas;
+			$model->sent_at = !isset($data['sent_at']) ? 'no_sent_at' : $data['sent_at'];
+			$model->ip = \getIpRemote();
+			$model->checksum = $checksum;
 
-			switch ($model->event) {
-				case 'nequi_token.updated':
-					$model->payment_method_type = "NEQUI";
-					$model->status = $data->nequi_token->status;
-					#$model->token_id = $data->nequi_token->id;
-					$model->reference = $data->nequi_token->phone_number;
-					$model->token_id = $data->nequi_token->id;
-					$model_WToken = new WompiTokens();
-					$model_WToken->getBy('token_id', $data->nequi_token->id);
-					$model->token_hash = $data->nequi_token->id;
-					$model->token_id = $model_WToken->id;
+			$valid = "";
+			foreach ($properties as $i=>$key) {
+				$abc = explode('.', $key);
+				$valid .= $datas->{$abc[0]}->{$abc[1]};
+			}
+			$valid = hash("sha256", $valid.$timestamp.WCO_KEY_EVENTS);
 
-					if($model_WToken->id>0){
-						$model_WToken->token_status = $data->nequi_token->status;
-						$result_update = $model_WToken->update();
-						if($result_update == true) {
-							$this->message = "updated.success";
-						} else {
-							$this->message = "updated.fail";
-						};
-					}
-					break;
-				case 'transaction.updated':
-					if(isset($data->transaction->status)){
-							$model->transaction_id = $data->transaction->id;
-							$model->amount_in_cents = $data->transaction->amount_in_cents;
-							$model->reference = $data->transaction->reference;
-							$model->currency = $data->transaction->currency;
-							$model->status = $data->transaction->status;
-							$model->payment_method_type = $data->transaction->payment_method_type;
+			if($valid == $checksum){
 
+				switch ($model->event) {
+					case 'nequi_token.updated':
+						$model->payment_method_type = "NEQUI";
+						$model->status = $datas->nequi_token->status;
+						#$model->token_id = $datas->nequi_token->id;
+						$model->reference = $datas->nequi_token->phone_number;
+						$model->token_id = $datas->nequi_token->id;
+						$model_WToken = new \PACMEC\WompiTokens();
+						$model_WToken->getBy('token_id', $datas->nequi_token->id);
+						$model->token_hash = $datas->nequi_token->id;
+						$model->token_id = $model_WToken->id;
+
+						if($model_WToken->id>0){
+							$model_WToken->token_status = $datas->nequi_token->status;
+							$result_update = $model_WToken->update();
+							if($result_update == true) {
+								$this->message = "updated.success";
+							} else {
+								$this->message = "updated.fail";
+							};
+						}
+						break;
+					case 'transaction.updated':
+						if(isset($datas->transaction->status)){
+
+							$model->transaction_id = $datas->transaction->id;
+							$model->amount_in_cents = $datas->transaction->amount_in_cents;
+							$model->reference = $datas->transaction->reference;
+							$model->currency = $datas->transaction->currency;
+							$model->status = $datas->transaction->status;
+							$model->payment_method_type = $datas->transaction->payment_method_type;
 							// decode reference
-							$ref = base64_decode($data->transaction->reference);
+							$ref = base64_decode($datas->transaction->reference);
 							$ref = explode('.', $ref);
 							foreach ($ref as $i => $value) {
 								$ref[$i] = base64_decode($value);
 							}
+
 							if(isset($ref[0])){
 								switch ($ref[0]) {
 									case 'recharges':
 										// Validar si la ref existe y actualizar estado
-										$model_recharge = new Recharge();
-										$model_recharge->getBy('ref', $data->transaction->reference);
+										$model_recharge = new \PACMEC\Recharge();
+										$model_recharge->getBy('ref', $datas->transaction->reference);
 										if(
 											$model_recharge->user_id == $ref[1]
 												&& $model_recharge->purse_id == $ref[2]
 												&& $model_recharge->amount == $ref[3]
 										){
-											$model_recharge->status = $data->transaction->status;
+											$model_recharge->status = $datas->transaction->status;
 											$model_recharge->transaction_id = $model->transaction_id;
-											$model_recharge->payment_method_type = $data->transaction->payment_method_type;
-											$model_recharge->amount = ($data->transaction->amount_in_cents/100);
+											$model_recharge->payment_method_type = $datas->transaction->payment_method_type;
+											$model_recharge->amount = ($datas->transaction->amount_in_cents/100);
 											if($model_recharge->status == 'APPROVED'){
 												// SUMAR SALDO
-												$model_Wallet = new Wallet();
+												$model_Wallet = new \PACMEC\Wallet();
 												$model_Wallet->get_by_purseid_and_userid($model_recharge->purse_id, $model_recharge->user_id);
 												if($model_Wallet->id>0){
 													$model_Wallet->add_balance_recharge($model_recharge->amount);
@@ -167,25 +213,19 @@ class PaymentEventsController extends \PACMEC\ControladorBase {
 										}
 										break;
 									case 'affiliates':
-										$model_affiliate = new Affiliates();
-										$model_affiliate->getBy('code_id', $data->transaction->reference);
+										$model_affiliate = new \PACMEC\Affiliates();
+										$model_affiliate->getBy('code_id', $ref[1]);
 
 										if($model_affiliate->id > 0){
-											switch ($data->transaction->status) {
+											switch ($datas->transaction->status) {
 												case 'PENDING':
 												case 'DECLINED':
 												case 'VOIDED':
 												case 'ERROR':
-													$model_affiliate->status = strtolower($data->transaction->status);
+													$model_affiliate->status = strtolower($datas->transaction->status);
 													break;
 												case 'APPROVED':
-													$amount1 = (double) ($data->transaction->amount_in_cents/100);
-													$amount2 = (double) $model_affiliate->billing_amount;
-													if($amount1 == $amount2){
-														$model_affiliate->status = "active";
-													} else {
-														$model_affiliate->status = "not_match";
-													}
+													$model_affiliate->status = "active";
 													break;
 												default:
 													break;
@@ -201,14 +241,21 @@ class PaymentEventsController extends \PACMEC\ControladorBase {
 										break;
 								}
 							}
-					}
-					break;
-				default:
-					// code...
-					break;
+						}
+						break;
+					default:
+						// code...
+						break;
+				}
+			} else {
+				$this->setError("Intenta nuevamente y seras reportado por tu conducta.");
 			}
-
 			$model->create();
+			if($model->id > 0){
+				//$this->setSuccess("OK");
+			} else {
+				$this->setError("wompi_fail");
+			}
 		}
 
 		echo json_encode($this);

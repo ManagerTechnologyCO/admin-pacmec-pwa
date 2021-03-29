@@ -7644,22 +7644,38 @@
                  $password = isset($body->password) ? $body->password : '';
                  $email = isset($body->email) ? $body->email : '';
                  $display_name = isset($body->display_name) ? $body->display_name : '';
+                 $address = isset($body->address) ? $body->address : '';
                  $newPassword = isset($body->newPassword) ? $body->newPassword : '';
                  $phones = isset($body->phones) ? $body->phones : '';
+                 $address = isset($body->address) ? $body->address : '';
                  $tableName = $this->getProperty('usersTable', 'users');
                  $table = $this->reflection->getTable($tableName);
+
                  $usernameColumnName = $this->getProperty('usernameColumn', 'username');
                  $usernameColumn = $table->getColumn($usernameColumnName);
-                 $passwordColumnName = $this->getProperty('passwordColumn', 'password');
+
+
                  $emailColumnName = $this->getProperty('emailColumn', 'email');
                  $emailColumn = $table->getColumn($emailColumnName);
+
                  $phonesColumnName = $this->getProperty('phonesColumn', 'phones');
-                 $phonesColumn = $table->getColumn($phonesColumnName);
+                 //$phonesColumn = $table->getColumn($addressColumnName);
+
+                 $addressColumnName = $this->getProperty('addressColumn', 'address');
+                 //$addressColumn = $table->getColumn($addressColumnName);
+
                  $displayColumnName = $this->getProperty('displayColumn', 'display_name');
+
+                 $passwordColumnName = $this->getProperty('passwordColumn', 'password');
                  $passwordLength = $this->getProperty('passwordLength', '12');
+
                  $pkName = $table->getPk()->getName();
+
                  $registerUser = $this->getProperty('registerUser', '');
+
                  $condition = new ColumnCondition($usernameColumn, 'eq', $username);
+                 $condition2 = new ColumnCondition($emailColumn, 'eq', $email);
+
                  $returnedColumns = $this->getProperty('returnedColumns', '');
                  if (!$returnedColumns) {
                      $columnNames = $table->getColumnNames();
@@ -7671,7 +7687,7 @@
                  }
                  $columnOrdering = $this->ordering->getDefaultColumnOrdering($table);
                  if ($path == 'register') {
- 					/*
+ 					           /*
                      if (!$registerUser) {
                          return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
                      }
@@ -7693,7 +7709,7 @@
                          return $this->responder->success($user);
                      }
                      return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
- 					*/
+ 					           */
 
                      if (!$registerUser) {
                          return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
@@ -7705,6 +7721,11 @@
                      if (!empty($users)) {
                          return $this->responder->error(ErrorCode::USER_ALREADY_EXIST, $username);
                      }
+
+                     $users_email = $this->db->selectAll($table, $columnNames, $condition2, $columnOrdering, 0, 1);
+                     if (!empty($users_email)) {
+                         return $this->responder->error(ErrorCode::EMAIL_ALREADY_EXIST, $email);
+                     }
                      $data = json_decode($registerUser, true);
                      $data = is_array($data) ? $data : [];
                      $data[$usernameColumnName] = $username;
@@ -7712,13 +7733,13 @@
                      $data[$emailColumnName] = $email;
                      $data[$displayColumnName] = $display_name;
                      $data[$phonesColumnName] = $phones;
+                     $data[$addressColumnName] = $address;
                      $this->db->createSingle($table, $data);
                      $users = $this->db->selectAll($table, $columnNames, $condition, $columnOrdering, 0, 1);
                      foreach ($users as $user) {
                          unset($user[$passwordColumnName]);
                          return $this->responder->success($user);
                      }
-
                      return $this->responder->error(ErrorCode::AUTHENTICATION_FAILED, $username);
                  }
                  if ($path == 'login') {
@@ -7730,13 +7751,13 @@
                              }
                              unset($user[$passwordColumnName]);
 
- 							if(!isset($user['list']) || $user['list'] == null) $user['list'] = '';
- 							if(!isset($user['create']) || $user['create'] == null) $user['create'] = '';
- 							if(!isset($user['read']) || $user['read'] == null) $user['read'] = '';
- 							if(!isset($user['update']) || $user['update'] == null) $user['update'] = '';
- 							if(!isset($user['delete']) || $user['delete'] == null) $user['delete'] = '';
- 							if(!isset($user['increment']) || $user['increment'] == null) $user['increment'] = '';
- 							if(!isset($user['permissions']) || $user['permissions'] == null) $user['permissions'] = '';
+               							if(!isset($user['list']) || $user['list'] == null) $user['list'] = '';
+               							if(!isset($user['create']) || $user['create'] == null) $user['create'] = '';
+               							if(!isset($user['read']) || $user['read'] == null) $user['read'] = '';
+               							if(!isset($user['update']) || $user['update'] == null) $user['update'] = '';
+               							if(!isset($user['delete']) || $user['delete'] == null) $user['delete'] = '';
+               							if(!isset($user['increment']) || $user['increment'] == null) $user['increment'] = '';
+               							if(!isset($user['permissions']) || $user['permissions'] == null) $user['permissions'] = '';
 
                              $_SESSION['user'] = $user;
                              return $this->responder->success($user);
@@ -10129,6 +10150,7 @@
          const PAGINATION_FORBIDDEN = 1019;
          const USER_ALREADY_EXIST = 1020;
          const PASSWORD_TOO_SHORT = 1021;
+         const EMAIL_ALREADY_EXIST = 1022;
 
          /*private $values = [
              0000 => ["Success", ResponseFactory::OK],
@@ -10181,6 +10203,7 @@
              1019 => ["Paginación prohibida", ResponseFactory::FORBIDDEN],
              1020 => ["El usuario '%s' ya existe", ResponseFactory::CONFLICT],
              1021 => ["Contraseña demasiado corta (<%d caracteres)", ResponseFactory::UNPROCESSABLE_ENTITY],
+             1022 => ["El correo '%s' ya existe", ResponseFactory::CONFLICT],
          ];
 
          public function __construct(int $code)
@@ -11593,7 +11616,6 @@
   use Tqdev\PhpCrudApi\RequestFactory;
   use Tqdev\PhpCrudApi\ResponseUtils;
 
-
   ini_set('display_errors', 0);
   ini_set('display_startup_errors', 0);
   error_reporting(false);
@@ -11626,56 +11648,93 @@
     'sanitation.types' => 'date,timestamp',
     //'sanitation.tables' => 'posts,comments',
     // Validar tabla por operacion
+
     'authorization.tableHandler' => function ($operation, $tableName) {
-      if(isset($_SESSION['user']) && isset($_SESSION['user']['is_admin']) && $_SESSION['user']['is_admin'] == 1) return true;
+      $myX = false;
+      if(isset($_SESSION['user']) && isset($_SESSION['user']['is_admin']) && $_SESSION['user']['is_admin'] == 1) $myX = true;
+      else if(isset($_SESSION['user'][$operation]) && !empty($_SESSION['user'][$operation])) {
+        $explode = explode(',', $_SESSION['user'][$operation]);
+        if(in_array($tableName, $explode)){
+          $myX = true;
+        }
+      } else {
+        $f_a = PACMEC_PATH . "api/authorization/tableHandler/{$tableName}/{$operation}.php";
+        $f_p = PACMEC_PATH . "api/authorization/tableHandler/default/{$operation}.php";
+        if(is_file($f_a) && @file_exists($f_a)){
+          $myX = require $f_a;
+        } else if(is_file($f_p) && @file_exists($f_p)){
+          $myX = require $f_p;
+        }
+      }
+      if(myX == false){
+        echo $tableName;
+        exit;
+      }
+      return $myX;
+    },
+    // Columnas habilitadas segun operacion
+    'authorization.columnHandler' => function ($operation, $tableName, $columnName) {
+      $myX = [];
+      if(isset($_SESSION['user']) && isset($_SESSION['user']['is_admin']) && $_SESSION['user']['is_admin'] == 1) $myX = ['*'];
+      else if(isset($_SESSION['user'][$operation]) && !empty($_SESSION['user'][$operation])) {
+        $explode = explode(',', $_SESSION['user'][$operation]);
+        if(in_array($tableName, $explode)){
+          $myX = ['*'];
+        } else {
+          $myX = [];
+        };
+      } else {
+        $f_a = PACMEC_PATH . "api/authorization/columnHandler/{$tableName}/{$operation}.php";
+        $f_p = PACMEC_PATH . "api/authorization/columnHandler/default/{$operation}.php";
+        $file_path = (!is_file($f_a) || !@file_exists($f_a)) ? $f_p : $f_a;
+        if(is_file($file_path) && @file_exists($file_path)){
+          $myX = require $file_path;
+        }
+      }
+      return (in_array($columnName, $myX) || in_array('*', $myX));
+    },
+
+    // Filtros para el record
+    'authorization.recordHandler' => function ($operation, $tableName) {
+      if(isset($_SESSION['user']['is_admin']) && !empty($_SESSION['user']['is_admin']) && $_SESSION['user']['is_admin'] == 1){ return true; }
+      $myX = false;
+      $f_a = PACMEC_PATH . "api/authorization/recordHandler/{$tableName}/{$operation}.php";
+      $f_p = PACMEC_PATH . "api/authorization/recordHandler/default/{$operation}.php";
+      $file_path = (!is_file($f_a) || !@file_exists($f_a)) ? $f_p : $f_a;
+      if(is_file($file_path) && @file_exists($file_path)){
+        $myX = require $file_path;
+      }
+      return $myX;
+    },
+
+    // Valores predeterminados en columnas segun operacion
+    'multiTenancy.handler' => function ($operation, $tableName) {
+      if(isset($_SESSION['user']['is_admin']) && !empty($_SESSION['user']['is_admin']) && $_SESSION['user']['is_admin'] == 1){ return true; }
       if(isset($_SESSION['user'][$operation]) && !empty($_SESSION['user'][$operation])) {
         $explode = explode(',', $_SESSION['user'][$operation]);
         if(in_array($tableName, $explode)){
           return true;
-        } else {
-          return false;
-        };
+        }
       } else {
-        $f_a = PACMEC_PATH . "api/authorization/tableHandler/{$tableName}/{$operation}.php";
-        $f_p = PACMEC_PATH . "api/authorization/tableHandler/default/{$operation}.php";
+        $f_a = PACMEC_PATH . "api/multiTenancy/handler/{$tableName}/{$operation}.php";
+        $f_p = PACMEC_PATH . "api/multiTenancy/handler/default/{$operation}.php";
         $file_path = (!is_file($f_a) || !@file_exists($f_a)) ? $f_p : $f_a;
-        if(!is_file($file_path) || !@file_exists($file_path)){
-          return $myX = require $file_path;
+        if(is_file($file_path) && @file_exists($file_path)){
+          return require $file_path;
         } else {
           return false;
         }
       }
-    },
-    /*
-    // Columnas habilitadas segun operacion
-    'authorization.columnHandler' => function ($operation, $tableName, $columnName) {
-      if(!isset($_SESSION['user']['is_admin']) && !empty($_SESSION['user']['is_admin']) && $_SESSION['user']['is_admin'] == 1){ return ["*"]; }
-      $file_path = PACMEC_PATH . "api/authorization/columnHandler/{$tableName}.{$operation}.php";
-      if(!is_file($file_path) || !@file_exists($file_path)){
-        $file_path = PACMEC_PATH . "api/authorization/columnHandler/default.{$operation}.php";
-        if(!is_file($file_path) || !@file_exists($file_path)){
-          return [];
-        }
-      } else {
-        return [];
-      }
-      $myX = require $file_path;
-      return (in_array($columnName, $myX) || in_array('*', $myX));
-    },
-    // Valores predeterminados en columnas segun operacion
-    'multiTenancy.handler' => function ($operation, $tableName) {
-      if(!isset($_SESSION['user']['is_admin']) && !empty($_SESSION['user']['is_admin']) && $_SESSION['user']['is_admin'] == 1){ return true; }
-      $file_path = PACMEC_PATH . "api/multiTenancy/handler/{$tableName}.{$operation}.php";
-      if(!is_file($file_path) || !@file_exists($file_path)){
-        $file_path = PACMEC_PATH . "api/multiTenancy/handler/default.{$operation}.php";
-        if(!is_file($file_path) || !@file_exists($file_path)){
-          return false;
-        }
-      } else {
         return false;
-      }
-      return $myX = require $file_path;
     },
+
+    /*
+
+    */
+
+
+
+    /*
     // Filtros para el record
     'authorization.recordHandler' => function ($operation, $tableName) {
       if(!isset($_SESSION['user']['is_admin']) && !empty($_SESSION['user']['is_admin']) && $_SESSION['user']['is_admin'] == 1){ return true; }
@@ -11689,7 +11748,8 @@
         return false;
       }
       return $myX = require $file_path;
-    },*/
+    },
+    */
     'sanitation.handler' => function ($operation, $tableName, $column, $value) {
       return is_string($value) ? strip_tags($value) : $value;
     },

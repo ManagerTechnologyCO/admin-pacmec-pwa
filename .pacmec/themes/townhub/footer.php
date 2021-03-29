@@ -128,7 +128,7 @@ $contact_info = pacmec_decode_64_sys('site_info');
               <!--sub-footer-->
               <div class="sub-footer  fl-wrap">
                   <div class="container">
-                      <div class="copyright"> &#169; Townhub 2019 .  All rights reserved.</div>
+                      <div class="copyright"><?= PowBy(); ?></div>
                       <?php if(!empty($GLOBALS['PACMEC']['glossary'])): ?>
                     	<div class="lang-wrap">
                     		<div class="show-lang">
@@ -162,7 +162,9 @@ $contact_info = pacmec_decode_64_sys('site_info');
               <!--sub-footer end -->
           </footer>
           <!--footer end -->
-          <?php get_template_part("template-parts/modals/register"); ?>
+          <?php
+          if(isGuest()) get_template_part("template-parts/modals/register");
+           ?>
           <!--register form end -->
           <a class="to-top"><i class="fas fa-caret-up"></i></a>
 

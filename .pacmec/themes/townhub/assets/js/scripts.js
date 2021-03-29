@@ -413,6 +413,11 @@ function initTowhub() {
         e.preventDefault();
         $(".show-more-snopt-tooltip").toggleClass("show-more-snopt-tooltip_vis");
     });
+    tippy('.tolt2', {
+      content: '',
+			animation: 'scale',
+			arrow: true
+		});
     /*
     tippy('.tolt2', {
       content: '',

@@ -10,9 +10,16 @@
 $meinfo = meinfo();
 $me = $meinfo->user;
 $wallets = $meinfo->wallets;
+$purses_to_send = $meinfo->purses_to_send;
+$membership = $meinfo->membership;
 
-
-
+//echo json_encode($_SESSION['membership']);
+/*
+echo json_encode([
+	'status' => 'review',
+	'user_id' => $_SESSION['user']['id'],
+	'affiliate_id' => \meAffiliationId(),
+]);*/
 ?>
 <div id="me-wallets">
 	<v-style type="text/css">
@@ -129,6 +136,44 @@ $wallets = $meinfo->wallets;
 				</div>
 			</template>
 		</div>
+		<div class="clearfix"></div>
+		<div class="restmenu-item" style="width:100%;" v-if="wallets.length==0">
+			<div class="list-single-header list-single-header-inside block_box fl-wrap">
+				<div class="list-single-header-item  fl-wrap">
+					<div class="row">
+						<?php if(isMember()): ?>
+							<div class="col-md-12" v-if="purses_to_send.length==0">
+								<?= _autoT('purses_to_send_text_member_prv'); ?> {{membership.max_members}} <?= _autoT('purses_to_send_text_member_next'); ?>
+							</div>
+						<?php else: ?>
+							<p><?= _autoT('request_wallets_no_is_member'); ?></p>
+						<?php endif; ?>
+							<div class="col-md-12">
+								<?php foreach ($purses_to_send as $peti): ?>
+									<div class="dashboard-message">
+			            	<div class="dashboard-message-text">
+			                <!--//<i class="fal fa-user-times orange-bg"></i>-->
+											<p>
+												<?= _autoT('purses_to_send_prv_text_view'); ?> <a href="#"><?= $peti->quantity; ?></a> <?= _autoT('purses_to_send_next_text_view'); ?>
+											</p>
+										</div>
+			              <div class="dashboard-message-time"><i class="fal fa-wallet"></i><?= _autoT('purses_to_send_status_'.$peti->status); ?></div>
+									</div>
+								<?php endforeach; ?>
+							</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="clearfix"></div>
+		<?php if(isMember()): ?>
+			<div class="fl-wrap" v-if="wallets.length == 0">
+					<a @click="requestPurse" v-if="purses_to_send.length==0" class="btn color2-bg float-btn"><i class="fas fa-wallet"></i> <?= _autoT('request_wallets'); ?> </a>
+			</div>
+		<?php else: ?>
+			<a href="/me/membership" class="btn color2-bg float-btn"><i class="fas fa-fal fa-users-crown"></i> <?= _autoT('choose_membership'); ?> </a>
+		<?php endif; ?>
+
 		<!--//<router-link :to="{ name: 'add-wallet' }" class="btn color2-bg float-btn"><i class="fas fa-plus"></i> Añadir Monedero </router-link>-->
 	</div>
 </div>
@@ -145,6 +190,8 @@ var me_profile_change_pass = new Vue({
 		return {
 			me: <?= json_encode($me, JSON_PRETTY_PRINT); ?>,
 			wallets: <?= json_encode($wallets, JSON_PRETTY_PRINT); ?>,
+			membership: <?= json_encode($membership, JSON_PRETTY_PRINT); ?>,
+			purses_to_send: <?= json_encode($purses_to_send, JSON_PRETTY_PRINT); ?>,
 			glossary_txt: <?= json_encode($GLOBALS['PACMEC']['glossary_txt'], JSON_PRETTY_PRINT); ?>,
 		};
 	},
@@ -585,6 +632,89 @@ var me_profile_change_pass = new Vue({
 						Swal.insertQueueStep({
 							icon: 'error',
 							title: "<?= _autoT('error_pin'); ?>"
+						})
+					}
+				}
+			}]);
+		},
+		requestPurse(){
+			let self = this;
+			console.log('requestPurse');
+			Swal.queue([{
+				title: "<?= _autoT('request_purse_title'); ?>",
+				text: "<?= _autoT('request_purse_text'); ?>",
+				input: 'number',
+				inputValue: self.membership.max_members,
+				inputAttributes: {
+					min: self.membership.max_members,
+					step: 1,
+				},
+				inputPlaceholder: "<?= _autoT('enter_quantity'); ?>",
+				showCancelButton: true,
+				cancelButtonText: "<?= _autoT('cancel'); ?>",
+				confirmButtonText: "<?= _autoT('confirm'); ?>",
+				showLoaderOnConfirm: true,
+				allowOutsideClick: () => !Swal.isLoading(),
+				preConfirm: (quantity) => {
+					if(quantity && quantity >= self.membership.max_members){
+						 return PACMEC.create('purses_to_send', {
+							 quantity: quantity,
+							 user_id: <?= $_SESSION['user']['id']; ?>,
+							 affiliate_id: <?= $_SESSION['membership']->id; ?>
+						 }, (resultado) => {
+							 console.log('resultado', resultado);
+
+							 if(resultado.error == false){
+								 return Swal.fire({
+								  icon: 'success',
+								  title: "<?= _autoT('purses_to_send_success'); ?>",
+									preConfirm: (quantity) => {
+										location.reload();
+									}
+								})
+							 } else {
+								 if(!(resultado.data.message)){
+									 return Swal.fire({
+			 							icon: 'error',
+			 							title: "<?= _autoT('purses_to_send_fail'); ?>"
+			 						})
+								} else {
+									return Swal.fire({
+									 icon: 'error',
+									 title: resultado.data.message
+								 })
+								}
+							 }
+						 })
+
+						 /*PACMEC.core.get('/', {
+							params: {
+								controller: 'Wallet',
+								action: 'changeStatus',
+								status: 'losted',
+								puid: self.wallets[wallet_index].wallet.puid,
+								pin: pin
+							}
+						})
+						.then((response) => {
+							let data = response.data;
+							console.log('data', data);
+							return Swal.insertQueueStep({
+								icon: data.error == false ? 'success' : 'error',
+								title: data.message
+							});
+						})
+						.catch((error) => {
+							console.log('error', error);
+							Swal.showValidationMessage("<?= _autoT('error_losted'); ?>");
+						})
+						.finally(()=>{
+							location.reload();
+						});*/
+					} else {
+						return Swal.insertQueueStep({
+							icon: 'error',
+							title: "<?= _autoT('error_quantity'); ?>"
 						})
 					}
 				}
